@@ -2,54 +2,40 @@ import tkinter as tk
 from tkinter import messagebox
 
 
-class Main_Screen:
-    '''
-    ΕΙΝΑΙ ΕΝΑ ΑΠΛΟ ΠΑΡΑΘΥΡΟ ΑΡΓΟΤΕΡΑ ΘΑ ΓΙΝΕΙ ΑΝΑΠΤΥΞΗ ΣΤΟ main_view.py
-    '''
 
-    def __init__(self, root, username):
-        self.root = root
-        self.root.title(f"{username} books")
-        self.root.geometry("600x400")
+class LoginScreen(tk.Frame):
+    '''Η κλάση LoginScreen είναι ενα Tkinter Frame. Είναι η πρώτη οθόνη που βλέπει ο χρήστης
+    όταν θέλει να κάνει σύνδεση/εγγραφή και θα περιέχει τα κατάλληλα γραφικα στοιχεία '''
+    
+    def __init__(self, parent, manager):
+        super().__init__(parent)
+        #ΑΠΟΘΗΚΕΥΟΜΕ ΤΟΝ ΔΙΑΧΕΙΡΙΣΤΗ (Manager) ΓΙΑ ΝΑ ΤΟΝ ΕΧΕΙ ΤΟ ΑΝΤΙΚΕΙΜΕΝΟ ΣΤΗ ΜΝΗΜΗ ΤΟΥ ΚΑΙ ΝΑ ΤΟΥ ΔΙΝΕΙ ΕΝΤΟΛΕΣ ΑΡΓΟΤΕΡΑ
+        self.manager = manager 
+        # self.auth_service = AuthService()  Φέρνουμε τη λογική του Authentication
 
-        #ΤΟ FRAME ΠΟΥ ΘΑ ΠΕΡΙΕΧΕΙ ΟΤΙ ΓΡΑΨΟΥΜΕ
-        self.frame = tk.Frame(self.root)
-        self.frame.pack(pady=40)
-        
-        tk.Label(self.frame, text = f"Welcome ,{username}", font=("Courier", 16, "bold")).pack(pady=20)
-
-        tk.Button(self.frame, text = "Logout", command = self.root.quit, bg = 'blue', fg = 'white').pack(pady=20)
-
-
-class Login_Screen:
-    def __init__(self, root):
-        self.root = root 
-        #ΤΙΤΛΟΣ ΚΑΙ ΜΕΓΕΘΟΣ ΟΘΟΝΗΣ
-        self.root.title("myBooks")
-        self.root.geometry("500x550")
-
-        #ΤΟ FRAME ΠΟΥ ΘΑ ΠΕΡΙΕΧΕΙ ΟΤΙ ΓΡΑΨΟΥΜΕ
-        self.frame = tk.Frame(self.root)
-        self.frame.pack(pady=15)
-
-        #Η ΣΥΝΑΡΤΗΣΗ ΘΑ ΦΤΙΑΞΕΙ ΤΟ ΠΕΡΙΒΑΛΛΟΝ ΤΟΥ FRAME
+        #Η ΣΥΝΑΡΤΗΣΗ ΘΑ ΦΤΙΑΞΕΙ ΤΟ ΠΕΡΙΒΑΛΛΟΝ 
         self.setup_frame()
 
     def setup_frame(self):
-        tk.Label(self.frame, text = "Welocme to myBooks app", font = ("Courier", 14, "bold")).pack(pady=15)
+        container = tk.Frame(self)
+        container.pack(expand=True)
+
+        tk.Label(container, text = "Welocme to myBooks app", font = ("Courier", 14, "bold")).pack(pady=20)
         
         #ΤΑ ΠΕΔΙΑ ΠΟΥ ΘΑ ΠΛΗΚΤΡΟΛΟΓΕΙ Ο ΧΡΗΣΤΗΣ
-        tk.Label(self.frame, text = "Username: ").pack()
-        self.ent_username = tk.Entry(self.frame)
+        tk.Label(container, text = "Username: ").pack()
+        self.ent_username = tk.Entry(container)
         self.ent_username.pack(pady=5)
 
-        tk.Label(self.frame, text = "Password: ").pack()
-        self.ent_password = tk.Entry(self.frame, show='*')
+        tk.Label(container, text = "Password: ").pack()
+        self.ent_password = tk.Entry(container, show='*')
         self.ent_password.pack(pady=5)
 
         #ΤΑ ΚΟΥΜΠΙΑ ΓΙΑ ΤΗΝ ΕΙΣΟΔΟ ΚΑΙ ΕΓΓΡΑΦΗ
-        tk.Button(self.frame, text = "Sign in", command = self.login_ui).pack(pady=10)
-        tk.Button(self.frame, text = "Sign up", command = self.registration_ui).pack(pady=5)  
+        button_frame = tk.Frame(container)
+        button_frame.pack(pady=20)
+        Sign_in_button = tk.Button(button_frame, text = "Sign in", command = self.login_ui).pack(side="left", padx=10)
+        Sign_up_button = tk.Button(button_frame, text = "Sign up", command = self.registration_ui).pack(side="left", padx=10)
 
         
 
@@ -59,23 +45,21 @@ class Login_Screen:
 
         #ΑΝ ΔΕΝ ΕΓΡΑΨΕ Ο ΧΡΗΣΤΗΣ ΤΠΤ
         if username == "" or password == "":
-            messagebox.showwaring("Try again")
+            messagebox.showwarning("Try again")
             return
 
         #ΕΔΩ ΘΑ ΓΙΝΕΙ Η ΣΥΝΔΕΣΗ ΜΕ ΤΗΝ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΤΗΝ ΕΙΣΟΔΟ ΧΡΗΣΤΗ ΣΤΟ BACKEND ΓΙΑ ΤΩΡΑ ΘΑ ΒΑΛΟΥΜΕ ΜΙΑ ΜΕΤΑΒΛΗΤΗ 
         validate_user = True
 
         if validate_user:
-            messagebox.showinfo("Login succesful", f"Welcome {username}")
-            self.frame.destroy()
-
-            # -> ΑΦΟΥ ΚΛΕΙΣΟΥΜΕ ΤΟ ΠΑΡΑΘΥΡΟ ΕΔΩ ΘΑ ΚΑΛΕΙΤΕ ΜΙΑ ΑΛΛΗ ΟΘΟΝΗ Η MAIN
-            Main_Screen(self.root, username)
-            
-
+            messagebox.showinfo("Login succesful", f"Welcome")
+            self.ent_username.delete(0, tk.END)
+            self.ent_password.delete(0, tk.END)
+            self.manager.show_main()
         else:
             messagebox.showerror("Try again wrong username or password")
             self.ent_password.delete(0, tk.END)
+
 
     def registration_ui(self):
         username = self.ent_username.get()
@@ -99,10 +83,6 @@ class Login_Screen:
             self.ent_password.delete(0, tk.END)
 
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    test = Login_Screen(root)
-    root.mainloop()
 
 
 

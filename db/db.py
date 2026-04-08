@@ -1,7 +1,7 @@
 import sqlite3
 
 
-class Db_admin:
+class Database_Manager:
 
     def __init__(self,db_name):
         self.db_name = db_name
@@ -85,7 +85,7 @@ class Db_admin:
         with self.create_connection() as connection:
             cursor = connection.cursor()
 
-            search_query = ("SELECT user_id from USERS WHERE username = ? AND password = ?," (username,password))
+            search_query = "SELECT user_id from USERS WHERE username = ? AND password = ?"
             cursor.execute(search_query,(username, password))
 
             user = cursor.fetchone()
@@ -112,15 +112,17 @@ class Db_admin:
                 return cursor.lastrowid
             except Exception as fail:
                 print(f"ΑΠΟΤΥΧΙΑ ΕΙΣΑΓΩΓΗΣ: {fail}")
+                return None
 
     def add_rating(self,user_id, book_id, comments, rating):
+        if (rating < 1 or rating > 5):
+                print("ΒΑΘΜΟΛΟΓΙΑ ΠΡΕΠΕΙ ΝΑ ΕΙΝΑΙ 1-5 ")
+                return False
+            
         with self.create_connection() as connection:
             cursor = connection.cursor()
 
-            if (rating < 1 or rating > 5):
-                print("ΒΑΘΜΟΛΟΓΙΑ ΠΡΕΠΕΙ ΝΑ ΕΙΝΑΙ 1-5 ")
-                return 
-            
+           
             try:
                 cursor.execute("SELECT rate_id FROM RATINGS WHERE user_id = ? AND book_id = ?",(user_id,book_id))
                 rating_exists = cursor.fetchone()
@@ -133,8 +135,9 @@ class Db_admin:
                     insert_query = "INSERT INTO RATINGS(user_id, book_id, comments, rating) VALUES (?, ?, ?, ?)"
                     cursor.execute(insert_query,(user_id, book_id, comments, rating))
                     print("ΕΠΙΤΥΧΗΣ ΑΞΙΟΛΟΓΗ ΒΙΒΛΙΟΥ")
-
+                    
                 connection.commit()
+                return True
             except sqlite3.IntegrityError as Error:
                 print(f"ΠΡΟΕΚΥΨΕ ΑΚΕΡΑΙΟΤΗΤΑΣ: {Error}")
                 return False
@@ -148,6 +151,6 @@ class Db_admin:
 if __name__== "__main__":
 
     db_name = 'myBooks'
-    myBooks_db = Db_admin(db_name)
+    myBooks_db = Database_Manager(db_name)
     
     
