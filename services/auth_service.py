@@ -1,8 +1,5 @@
 import hashlib   # built-in βιβλιοθήκη για κρυπτογράφηση
-import sys 
-import os
 
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from db.db import get_user_by_username
 
@@ -24,9 +21,11 @@ def login(username: str, password: str) -> dict | None:
     """
     user = get_user_by_username(username)
     
+    # Έλεγχος αν ο χρήστης υπάρχει
     if user is None:
         return None
     
+    # Έλεγχος αν το password ταιριάζει
     if hash_password(password) == user["password"]:
         return {"id": user["id"], "username": user["username"]}
     
