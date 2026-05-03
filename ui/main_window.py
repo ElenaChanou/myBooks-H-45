@@ -1,7 +1,7 @@
 from tkinter import ttk
 import tkinter as tk
 from tkinter import messagebox
-
+from book_details_window import BookDetailsWindow
 class MainWindow:
     def __init__(self, master):
         self.master = master
@@ -142,11 +142,27 @@ class MainWindow:
             item_data = self.tree.item(selected_item)['values']
             book_id = item_data[0]
             print(f"Άνοιγμα λεπτομερειών για το βιβλίο με ID: {book_id}")
-        
+            book_to_open = next(b for b in self.books_data if b["id"]==book_id)
+            #Σύνδεση με την class BookDetails
+            BookDetailsWindow(master=self.master, book_data=book_to_open, on_save=self.refresh_books_list)
+
 
     #Συνάρτηση προσθήκης βιβλίου από το διαδίκτυο. Προς το παρόν δοκιμαστικά ένα print.
     def online_search(self):
         print(" Άνοιγμα παραθύρου online αναζήτησης")
+
+    #Μηχανισμός διαγραφής για να μην φαίνονται διπλά τα βιβλία μετά τη φόρτωση
+    def refresh_books_list(self):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+    #ξαναγεμίζουμε τον πίνακα από τη λίστα self.books_data προς το παρόν
+        for book in self.books_data:
+            self.tree.insert("","end", values=(book["id"], book.get("title",""), book.get("author",""), book.get("year",""), book.get("avg_rate", 0), book.get("total_rates",0)))
+        print("Ο πίνακας καθαρίστηκε και ενημερώθηκε")
+
+
+
+
 
 
 
@@ -155,9 +171,20 @@ class MainWindow:
 
 
 if __name__ == "__main__":
-    root = tk.Tk()           
-    app = MainWindow(root)   
-    root.mainloop()        
+    root = tk.Tk()
+    root.withdraw()
+    
+    # 1. Φτιάχνουμε ένα ψεύτικο λεξικό για το τεστ
+    test_book = {"id": 1, "title": "Test Book", "author": "Test Author"}
+    
+    # 2. Φτιάχνουμε μια ψεύτικη συνάρτηση για το on_save
+    def test_refresh(): print("Refresh callback triggered!")
+
+    # 3. Τα περνάμε στην κλήση
+    app = BookDetailsWindow(root, book_data=test_book, on_save=test_refresh)
+    
+    app.protocol("WM_DELETE_WINDOW", root.destroy)
+    root.mainloop()  
 
 
 
