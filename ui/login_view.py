@@ -2,42 +2,39 @@ import tkinter as tk
 from tkinter import messagebox
 
 
-
 class LoginScreen(tk.Frame):
     '''Η κλάση LoginScreen είναι ενα Tkinter Frame. Είναι η πρώτη οθόνη που βλέπει ο χρήστης
     όταν θέλει να κάνει σύνδεση/εγγραφή και θα περιέχει τα κατάλληλα γραφικα στοιχεία '''
     
     def __init__(self, parent, manager):
+        #ΚΑΛΟΥΜΕ ΤΟΝ CONSTRUCTOR ΤΗΣ ΓΟΝΙΚΗΣ ΚΛΑΣΗΣ (tk.Frame) ΓΙΑ ΝΑ ΕΧΟΥΜΕ ΟΛΗ ΤΗ ΛΕΙΤΟΥΡΓΙΚΟΤΗΤΑ ΕΝΟΣ FRAME
         super().__init__(parent)
         #ΑΠΟΘΗΚΕΥΟΜΕ ΤΟΝ ΔΙΑΧΕΙΡΙΣΤΗ (Manager) ΓΙΑ ΝΑ ΤΟΝ ΕΧΕΙ ΤΟ ΑΝΤΙΚΕΙΜΕΝΟ ΣΤΗ ΜΝΗΜΗ ΤΟΥ ΚΑΙ ΝΑ ΤΟΥ ΔΙΝΕΙ ΕΝΤΟΛΕΣ ΑΡΓΟΤΕΡΑ
         self.manager = manager 
-        # self.auth_service = AuthService()  Φέρνουμε τη λογική του Authentication
 
         #Η ΣΥΝΑΡΤΗΣΗ ΘΑ ΦΤΙΑΞΕΙ ΤΟ ΠΕΡΙΒΑΛΛΟΝ 
         self.setup_frame()
 
     def setup_frame(self):
-        container = tk.Frame(self)
-        container.pack(expand=True)
-
-        tk.Label(container, text = "Welocme to myBooks app", font = ("Courier", 14, "bold")).pack(pady=20)
+        
+        tk.Label(self, text = "Καλώς ήρθες στην myBooks app", font = ("Courier", 14, "bold")).pack(pady=20)
         
         #ΤΑ ΠΕΔΙΑ ΠΟΥ ΘΑ ΠΛΗΚΤΡΟΛΟΓΕΙ Ο ΧΡΗΣΤΗΣ
-        tk.Label(container, text = "Username: ").pack()
-        self.ent_username = tk.Entry(container)
+        tk.Label(self, text = "Username: ").pack()
+        self.ent_username = tk.Entry(self)
         self.ent_username.pack(pady=5)
 
-        tk.Label(container, text = "Password: ").pack()
-        self.ent_password = tk.Entry(container, show='*')
+        tk.Label(self, text = "Password:").pack()
+        self.ent_password = tk.Entry(self, show='*')
         self.ent_password.pack(pady=5)
 
-        #ΤΑ ΚΟΥΜΠΙΑ ΓΙΑ ΤΗΝ ΕΙΣΟΔΟ ΚΑΙ ΕΓΓΡΑΦΗ
-        button_frame = tk.Frame(container)
+        #ΤΑ ΚΟΥΜΠΙΑ ΓΙΑ ΕΙΣΟΔΟ ΚΑΙ ΕΓΓΡΑΦΗ MΕΣΑ ΣΕ ΕΝΑ FRAME ΞΕΧΩΡΙΣΤΟ 
+        button_frame = tk.Frame(self)
         button_frame.pack(pady=20)
-        Sign_in_button = tk.Button(button_frame, text = "Sign in", command = self.login_ui).pack(side="left", padx=10)
-        Sign_up_button = tk.Button(button_frame, text = "Sign up", command = self.registration_ui).pack(side="left", padx=10)
-
-        
+        Sign_in_button = tk.Button(button_frame, text = "Είσοδος", command = self.login_ui)
+        Sign_in_button.pack(side="left", padx = 10)
+        Sign_up_button = tk.Button(button_frame, text = "Εγγραφή", command = self.registration_ui)
+        Sign_up_button.pack(side="left", padx = 10)
 
     def login_ui(self):
         username = self.ent_username.get()
@@ -45,19 +42,20 @@ class LoginScreen(tk.Frame):
 
         #ΑΝ ΔΕΝ ΕΓΡΑΨΕ Ο ΧΡΗΣΤΗΣ ΤΠΤ
         if username == "" or password == "":
-            messagebox.showwarning("Try again")
+            messagebox.showwarning("Ξαναπροσπάθησε! ", "Συμπλήρωσε όλα τα πεδία.")
             return
+ 
+        #ΕΔΩ ΚΑΛΟΥΜΕ ΤΗΝ ΣΥΝΑΡΤΗΣΗ find_user ΤΟΥ Database_Manager
+        user_id = self.manager.db_manager.find_user(username, password) 
 
-        #ΕΔΩ ΘΑ ΓΙΝΕΙ Η ΣΥΝΔΕΣΗ ΜΕ ΤΗΝ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΤΗΝ ΕΙΣΟΔΟ ΧΡΗΣΤΗ ΣΤΟ BACKEND ΓΙΑ ΤΩΡΑ ΘΑ ΒΑΛΟΥΜΕ ΜΙΑ ΜΕΤΑΒΛΗΤΗ 
-        validate_user = True
-
-        if validate_user:
-            messagebox.showinfo("Login succesful", f"Welcome")
+        if user_id is not None:
+            messagebox.showinfo("Επιτυχής σύνδεση", f"Καλώς ήρθες, {username}")
+            self.manager.current_user = user_id  # Αποθήκευση του user_id του τρέχοντος χρήστη στον manager για μελλοντική χρήση
             self.ent_username.delete(0, tk.END)
             self.ent_password.delete(0, tk.END)
             self.manager.show_main()
         else:
-            messagebox.showerror("Try again wrong username or password")
+            messagebox.showerror("Σφάλμα", "Λάθος όνομα χρήστη ή κωδικός. Ξαναπροσπάθησε!")
             self.ent_password.delete(0, tk.END)
 
 
@@ -65,23 +63,20 @@ class LoginScreen(tk.Frame):
         username = self.ent_username.get()
         password = self.ent_password.get()
 
-        #ΑΝ ΔΕΝ ΕΓΡΑΨΕ Ο ΧΡΗΣΤΗΣ ΤΠΤ
+        #ΑΝ ΔΕΝ ΣΥΜΠΛΗΡΩΣΕ Ο ΧΡΗΣΤΗΣ ΕΝΑ ΑΠΟ ΤΑ ΠΕΔΙΑ
         if username == "" or password == "":
-            messagebox.showwarning("Try again")
+            messagebox.showwarning("Ξαναπροσπάθησε!", "Συμπλήρωσε όλα τα πεδία.")
             return
-
-        #ΕΔΩ ΘΑ ΓΙΝΕΙ Η ΣΥΝΔΕΣΗ ΜΕ ΤΗ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΤΗΝ ΕΓΓΡΑΦΗ ΤΟΥ ΧΡΗΣΤΗ ΣΤΟ BACKEND ΓΙΑ ΤΩΡΑ ΘΑ ΒΑΛΟΥΜΕ ΜΙΑ ΜΕΤΑΒΛΗΤΗ
-        registrated_user = True
+        #ΕΔΩ ΚΑΛΟΥΜΕ ΤΗΝ ΣΥΝΑΡΤΗΣΗ user_registration ΤΟΥ Database_Manager   
+        registrated_user = self.manager.db_manager.user_registration(username, password) 
 
         if registrated_user:
-            messagebox.showinfo("Registration is complete, try signing in ", f"{username}")
+            messagebox.showinfo("Εγγραφή ολοκληρώθηκε!", f"Μπορείτε να συνδεθείτε! {username}")
             self.ent_username.delete(0, tk.END)
             self.ent_password.delete(0, tk.END)
-
         else:
-            messagebox.showerror("Try again (username or password)")
+            messagebox.showerror("Σφάλμα", "Αυτό το όνομα χρήστη χρησιμοποιείται ήδη, ξαναπροσπάθησε.")
             self.ent_password.delete(0, tk.END)
-
 
 
 
