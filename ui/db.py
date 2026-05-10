@@ -106,7 +106,7 @@ class Database_Manager:
                     cursor.execute(insert_query,(title, authors,year, isbn, description, cover_img, volume_id))
 
                     connection.commit()
-                    return cursor.lastrowid
+                    return cursor.lastrowid # Το ID του βιβλίου 
                 except Exception as fail:
                     print(f"ΑΠΟΤΥΧΙΑ ΕΙΣΑΓΩΓΗΣ: {fail}")
                     return None
@@ -245,7 +245,7 @@ class Database_Manager:
         finally:
             connection.close()  
     
-    # UPDATE (Upsert):
+    # UPDATE (Upsert λειτουργεί και για insert και για update).
     def upsert_rating(self, user_id: int, book_id: int, rating: int, comments: str)-> bool:
 
         connection = self.create_connection()  

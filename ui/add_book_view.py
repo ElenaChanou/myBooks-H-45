@@ -10,6 +10,11 @@ class AddBookScreen(tk.Frame):
         #ΑΠΟΘΗΚΕΥΟΜΕ ΤΟΝ ΔΙΑΧΕΙΡΙΣΤΗ (Manager) ΓΙΑ ΝΑ ΤΟΝ ΕΧΕΙ ΤΟ ΑΝΤΙΚΕΙΜΕΝΟ ΣΤΗ ΜΝΗΜΗ ΤΟΥ ΚΑΙ ΝΑ ΤΟΥ ΔΙΝΕΙ ΕΝΤΟΛΕΣ ΑΡΓΟΤΕΡΑ
         self.manager = manager 
 
+        
+
+        self.MainButton = tk.Button(self, text = "Αρχική", bg ="blue",fg='white',width=20, command = manager.show_main)
+        self.MainButton.pack(pady=10)
+
         tk.Label(self, text = "Προσθήκη Βιβλίου", font=("Courier", 16)).pack(pady=20)
 
         tk.Label(self, text="Τίτλος:").pack()
@@ -31,16 +36,15 @@ class AddBookScreen(tk.Frame):
 
         tk.Label(self, text = "Σχόλια:").pack(pady=(10, 5))
 
-        # Text Widget: 4 γραμμές
+        # Σχολια 4 γραμμών
         self.comment_text = tk.Text(self, height=4, width=40)
         self.comment_text.pack(pady=5)
 
-        # Button: Αποθήκευση
+        # Αποθήκευση
         self.save_button = tk.Button(self, text= "Αποθήκευση", bg ="yellow", command=self.process_save)
         self.save_button.pack(pady=15)
 
-        self.MainButton = tk.Button(self, text = "Αρχική", bg ="lightgray", command = manager.show_main)
-        self.MainButton.pack(pady=10)
+        
 
 
     def process_save(self):

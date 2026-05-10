@@ -31,8 +31,10 @@ class LoginScreen(tk.Frame):
         #ΤΑ ΚΟΥΜΠΙΑ ΓΙΑ ΕΙΣΟΔΟ ΚΑΙ ΕΓΓΡΑΦΗ MΕΣΑ ΣΕ ΕΝΑ FRAME ΞΕΧΩΡΙΣΤΟ 
         button_frame = tk.Frame(self)
         button_frame.pack(pady=20)
+
         Sign_in_button = tk.Button(button_frame, text = "Είσοδος", command = self.login_ui)
         Sign_in_button.pack(side="left", padx = 10)
+        
         Sign_up_button = tk.Button(button_frame, text = "Εγγραφή", command = self.registration_ui)
         Sign_up_button.pack(side="left", padx = 10)
 

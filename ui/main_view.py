@@ -54,10 +54,10 @@ class MainScreen(tk.Frame):
         self.footer_frame.pack(pady=10)
         
         # Κρατήσαμε μόνο το κουμπί των λεπτομερειών στο κέντρο
-        self.bookDetails_button = tk.Button(self.footer_frame, text="Προβολή Λεπτομερειών", command=self.open_details, font=("Arial", 10, "bold"))
+        self.bookDetails_button = tk.Button(self.footer_frame, text="Προβολή Λεπτομερειών", command=self.open_details, bg="blue", fg='white', width=20)
         self.bookDetails_button.pack(side="left", padx=10)
 
-        self.Add_book_button = tk.Button(self, text="Προσθήκη βιβλίου", command=self.manager.show_add, bg='purple', fg='white', width=20)
+        self.Add_book_button = tk.Button(self, text="Προσθήκη βιβλίου", command=self.manager.show_add, bg='blue', fg='white', width=20)
         self.Add_book_button.pack(side="right", pady=15, padx=20)
 
         self.Logout_button = tk.Button(self, text="Αποσύνδεση", command=self.manager.show_login, bg='blue', fg='white', width=20)

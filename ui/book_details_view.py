@@ -13,10 +13,11 @@ class BookDetailsScreen(tk.Frame):
 
     def create_widgets(self):
         # 1. Κουμπί επιστροφής στην αρχική οθόνη
-        self.back_button = tk.Button(self, text="⬅ Πίσω", command=self.manager.show_main, font=("Arial", 10, "bold"), bg="lightgray")
-        self.back_button.pack(anchor="nw", pady=5, padx=5)
+        self.back_button = tk.Button(self, text="Αρχική", command=self.manager.show_main, 
+                                     font=("Arial", 10, "bold"), bg="blue", fg='white', width=20)
+        self.back_button.pack(pady=10)
 
-        # 2. Labels τίτλου και συγγραφέα (αρχικά κενά, θα γεμίζουν δυναμικά)
+        # 2. Labels τίτλου και συγγραφέα
         self.label_title = tk.Label(self, text="", font=("Arial", 18, "bold"))
         self.label_title.pack(pady=10)
 
@@ -27,37 +28,27 @@ class BookDetailsScreen(tk.Frame):
         self.label_cover = tk.Label(self)
         self.label_cover.pack(pady=10)
 
-        # 4. Λίστα σχολίων (Σε δικό του Frame για να μπει σωστά το Scrollbar)
-        self.tree_frame = tk.Frame(self)
-        self.tree_frame.pack(pady=10, padx=10, fill="both", expand=True)
+        # 4. Πλαίσιο Σχολίων (Αντικατάσταση Treeview με tk.Text)
+        self.comments_frame = tk.Frame(self)
+        self.comments_frame.pack(pady=10, padx=20, fill="both", expand=True)
 
-        self.tree_comments = ttk.Treeview(self.tree_frame, columns="comment", show="headings", height=5)
-        self.tree_comments.heading("comment", text="Σχόλια Χρηστών")
-        self.tree_comments.column("comment", width=400, anchor="w")
+        # Label για τίτλο πάνω από τα σχόλια
+        tk.Label(self.comments_frame, text="Σχόλια Χρηστών", font=("Arial", 12, "bold")).pack(pady = 15)
 
-        self.scrollbar = ttk.Scrollbar(self.tree_frame, orient="vertical", command=self.tree_comments.yview)
-        self.tree_comments.configure(yscrollcommand=self.scrollbar.set)
+        # Το Text widget με wrap="word" ώστε να κόβει το κείμενο στις λέξεις και όχι στα γράμματα
+        self.text_comments = tk.Text(self.comments_frame, height=8, wrap="word", font=("Arial", 10), state="disabled")
+        
+        # Scrollbar για το Text widget
+        self.scrollbar = ttk.Scrollbar(self.comments_frame, orient="vertical", command=self.text_comments.yview)
+        self.text_comments.configure(yscrollcommand=self.scrollbar.set)
 
         self.scrollbar.pack(side="right", fill="y")
-        self.tree_comments.pack(side="left", fill="both", expand=True)
+        self.text_comments.pack(side="left", fill="both", expand=True)
 
     def load_book_info(self, book_id):
-        """Αυτή η μέθοδος καλείται από τον Manager και φορτώνει τα δεδομένα του συγκεκριμένου βιβλίου"""
-        
-        # ---- ΠΡΟΣΩΡΙΝΑ DEMO DATA (Αργότερα θα έρχονται από τη βάση π.χ. self.manager.db.get_book(book_id) ) ----
-        book = {
-            "title": "Η μεγάλη χίμαιρα",
-            "authors": "Μ.Καραγάτσης",
-            "cover_path": None
-        }
-        
-        ratings = [
-            {"username": "Giannis", "rating": 5, "comment": "Εξαιρετικό!"},
-            {"username": "Vasilis", "rating": 4, "comment": "Αρκετά καλό"}
-        ]
-        # ---------------------------------------------------------------------------------------------------
-
-        # Ενημέρωση των κειμένων με τα νέα δεδομένα
+        book = self.manager.db_manager.get_book(book_id)
+        ratings = self.manager.db_manager.get_ratings(book_id)
+            
         self.label_title.config(text=book["title"])
         self.label_authors.config(text=f"Συγγραφέας: {book['authors']}")
 
@@ -67,20 +58,29 @@ class BookDetailsScreen(tk.Frame):
             try:
                 img = Image.open(path)
                 img = img.resize((150, 220))
-                self.photo = ImageTk.PhotoImage(img) # Η μεταβλητή πρέπει να είναι στο self.photo για να μην διαγραφεί!
+                self.photo = ImageTk.PhotoImage(img) # Αποθήκευση στο self.photo
                 self.label_cover.config(image=self.photo, text="")
             except Exception:
                 self.label_cover.config(image="", text="Σφάλμα φόρτωσης εικόνας", fg="red")
         else:
             self.label_cover.config(image="", text="Το εξώφυλλο δεν βρέθηκε\n(No Image)", font=("Arial", 10, "italic"), bg="lightgrey", width=20, height=10)
 
-        # Καθαρισμός του πίνακα από παλιά σχόλια (αν υπήρχαν) πριν βάλουμε τα νέα
-        for item in self.tree_comments.get_children():
-            self.tree_comments.delete(item)
 
-        # Φόρτωση νέων σχολίων στο Treeview
-        for r in ratings:
-            display_text = f"⭐ {r['rating']}/5 - {r['username']}: {r['comment']}"
-            self.tree_comments.insert("", "end", values=(display_text,))
-
+        # Κάνουμε ένα read-only Text widget για να εμφανίσουμε τα σχόλια
+        self.text_comments.delete("1.0", tk.END)
+        self.text_comments.config(state="normal")
+        
+        if not ratings:
+            self.text_comments.insert(tk.END, "Δεν υπάρχουν σχόλια γιά το βιβλίο ακόμη.\n")
+        else:
+            for rating_data in ratings:
+                # rating_data είναι λεξικό με τα κλειδιά: rating, comments, username
+            
+                rate_user = f"Βαθμολογία {rating_data['rating']}/5  από  {rating_data['username']}\n"
+                user_comment = f"{rating_data['comments']}\n"
+                
+                self.text_comments.insert(tk.END, rate_user)
+                self.text_comments.insert(tk.END, user_comment)
+        #Disable το Text widget για να μην μπορεί ο χρήστης να πειράξει τα σχόλια
+        self.text_comments.config(state="disabled")
         
