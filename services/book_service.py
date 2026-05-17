@@ -8,6 +8,7 @@ from db.db import (
     search_books as db_search_books,
     get_book,
     get_ratings_for_book,
+    get_user_ratings,
 )
 
 
@@ -51,3 +52,39 @@ def get_book_details(book_id:  int) -> dict | None:
         "book": book,
         "ratings": ratings,
     }
+
+def popular_books(limit=10):
+    # Επιστρέφει τα πιο δημοφιλή βιβλία βάσει avg_rating.
+    # Τα βιβλία χωρίς βαθμολογία μπαίνουν στο τέλος.
+
+    all_books = get_all_books_with_stats()
+
+    # Ταξινόμηση: 
+    # 1ο κριτήριο: Αν έχει rating (True/1) ή όχι (False/0) -> στέλνει τα None στο τέλος
+    # 2ο κριτήριο: Η τιμή του avg_rating
+    sorted_books = sorted(
+        all_books,
+        key=lambda x: (x.get('avg_rating') is not None, x.get('avg_rating') or 0),
+        reverse=True
+    )
+    
+    return sorted_books[:limit]
+
+
+def unread_popular_books(user_id, limit=10):
+   
+    # Επιστρέφει δημοφιλή βιβλία που ο χρήστης δεν έχει αξιολογήσει ακόμα.
+    # 1. Παίρνουμε τα δημοφιλή (χωρίς μικρό limit αρχικά για να έχουμε περιθώριο φιλτραρίσματος)
+
+    popular = popular_books(limit=100)
+    # 2. Παίρνουμε τα IDs των βιβλίων που έχει ήδη αξιολογήσει ο χρήστης
+    # Υποθέτουμε ότι η get_user_ratings επιστρέφει λίστα από dicts με 'book_id
+
+    user_ratings = get_user_ratings(user_id)
+    rated_ids = {r['book_id'] for r in user_ratings} # Set για ταχύτητα αναζήτησης
+
+    # 3. Φιλτράρισμα
+    unread = [book for book in popular if book['id'] not in rated_ids]
+
+    return unread[:limit]
+    
