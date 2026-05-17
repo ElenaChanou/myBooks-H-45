@@ -1,80 +1,71 @@
 import urllib.request
 import urllib.parse
 import json
+import os
+from dotenv import load_dotenv
 
 
-def search_books(query, max_results=5):
 
-    # Vasiko url apo to google books API
+load_dotenv()
+
+API_KEY = os.getenv("GOOGLE_BOOKS_API_KEY")
+
+
+def search_google_books(query):
     base_url = "https://www.googleapis.com/books/v1/volumes"
-
-    # parametroi pou tha xrhsimopoihsoume gia thn anazhthsh vivliwn
     params = {
         'q': query,
-        'maxResults': max_results,
+        'maxResults': 10,
         'printType': 'books',
-        'projection': 'lite'  # me authn thn parametrw glutwnoume xrono kathws dinei mono ths vasikes plhrofories
+        'projection': 'full',
+        'key': API_KEY
     }
 
-    # Metaroph se url (se morfh pou diavazei to web(kena metatrepontai se %20))
-    query_string = urllib.parse.urlencode(params)
-    url = f"{base_url}?{query_string}"
+    url = f"{base_url}?{urllib.parse.urlencode(params)}"
 
     try:
-        # Kaloume to API kai elegxoume ama to response apo thn selida den vgazei htpps errors kai vgazei 200(OK)
         with urllib.request.urlopen(url) as response:
-            if response.status == 200:
-                # Diavazei ta raw data se json morfh kai ta metatrepei se utf-8 wste na mporoume na ta diavasoume
-                data = json.loads(response.read().decode('utf-8'))
-
-                # an den vrethoune vivlia []
-                if 'items' not in data:
-                    return []
-
-                # Dhmiourgia listas pou tha apothikeutoun oi plhrofories tou vivliou
-                books_found = []
-
-                # loop pou pernaei kathe apotelesma pou mas edwse to api wste na apothikeusw ta info pou thelw
-                for item in data['items']:
-
-                    # To api ths google mas exei steilei ena leksiko me data kai mesa sto leksiko auto uparxei
-                    # h lista items. Mesa se auth einai apothikeumena ta apotelesmata tou search pou kaname
-                    # dhladh to id twn vilviwn kai o tupos(Books).Mesa sthn items uparxei to leksiko volumeInfo
-                    # to opoio periexei plhrofories opws authors,title,publishedDate kai image_links ktlp
-
-
-                    # pernw ta stoixeia me .get kai ta apothikeuw se metavlhtes analogws me to poies plhrofories
-                    # epileksoume oti tha exoume.Se periptwsh pou leipei mia plhroforia vazw default values (p.x
-                    # Άγνωστος Τίτλος)
-                    volume_info = item.get('volumeInfo', {})
-                    title = volume_info.get('title', 'Άγνωστος Τίτλος')
-
-                    authors_list = volume_info.get('authors', ['Άγνωστος Συγγραφέας'])
-                    authors = ", ".join(authors_list)
-
-                    published_date = volume_info.get('publishedDate', 'Άγνωστη Ημερομηνία')
-                    description = volume_info.get('description', 'Δεν υπάρχει διαθέσιμη περιγραφή.')
-
-                    # edw pernw to URL tou ekswfulou
-                    image_links = volume_info.get('imageLinks', {})
-                    cover_url = image_links.get('thumbnail', '')
-
-                    # apothikeuw ths plhrofories tou vivliou se ena leksiko
-                    book_data = {
-                        'title': title,
-                        'authors': authors,
-                        'published_date': published_date,
-                        'description': description,
-                        'cover_url': cover_url
-                    }
-                    # vazw to leksiko mesa sthn lista books_data pou dhmiourghsa prin
-                    books_found.append(book_data)
-
-                return books_found
-            else:
-                print(f"Σφάλμα API: Κωδικός {response.status}")
+            if response.status != 200:
+                print(f"API error: {response.status}")
                 return []
 
+            data = json.loads(response.read().decode('utf-8'))
+
+            if 'items' not in data:
+                return []
+
+            books_found = []
+            for item in data['items']:
+                volume_info = item.get('volumeInfo', {})
+
+                # authors is a list, join into a single string
+                authors_list = volume_info.get('authors', None)
+                authors = ", ".join(authors_list) if authors_list else None
+
+                # extract only the year from publishedDate (e.g. "1949-06-08" -> "1949")
+                published_date = volume_info.get('publishedDate', None)
+                year = published_date[:4] if published_date else None
+
+                # industryIdentifiers is a list of dicts, find the ISBN_13 entry
+                identifiers = volume_info.get('industryIdentifiers', [])
+                isbn = None
+                for identifier in identifiers:
+                    if identifier.get('type') == 'ISBN_13':
+                        isbn = identifier.get('identifier', None)
+                        break
+
+                books_found.append({
+                    'title': volume_info.get('title', None),
+                    'authors': authors,
+                    'year': year,
+                    'isbn': isbn,
+                    'description': volume_info.get('description', None),
+                    'cover_url': volume_info.get('imageLinks', {}).get('thumbnail', None),
+                    'volume_id': item.get('id', None)
+                })
+
+            return books_found
+
     except Exception as e:
-        print(f"Προέκυψε σφάλμα κατά την επικοινωνία με το API: {e}")
+        print(f"Error communicating with API: {e}")
         return []
