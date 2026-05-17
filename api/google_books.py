@@ -78,5 +78,3 @@ def search_books(query, max_results=5):
     except Exception as e:
         print(f"Προέκυψε σφάλμα κατά την επικοινωνία με το API: {e}")
         return []
-
-
