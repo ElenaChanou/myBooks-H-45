@@ -3,7 +3,7 @@ import urllib.parse
 import json
 
 
-def search_books(query, max_results=5):
+def search_google_books(query, max_results=5):
 
     # Vasiko url apo to google books API
     base_url = "https://www.googleapis.com/books/v1/volumes"
@@ -11,7 +11,7 @@ def search_books(query, max_results=5):
     # parametroi pou tha xrhsimopoihsoume gia thn anazhthsh vivliwn
     params = {
         'q': query,
-        'maxResults': max_results,
+        'maxResults': 10,
         'printType': 'books',
         'projection': 'lite'  # me authn thn parametrw glutwnoume xrono kathws dinei mono ths vasikes plhrofories
     }
