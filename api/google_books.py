@@ -40,7 +40,7 @@ def search_google_books(query):
 
                 # authors is a list, join into a single string
                 authors_list = volume_info.get('authors', None)
-                authors = ", ".join(authors_list) if authors_list else None
+                authors = ", ".join(authors_list) if authors_list else 'Unknown'
 
                 # extract only the year from publishedDate (e.g. "1949-06-08" -> "1949")
                 published_date = volume_info.get('publishedDate', None)
@@ -59,7 +59,7 @@ def search_google_books(query):
                     'authors': authors,
                     'year': year,
                     'isbn': isbn,
-                    'description': volume_info.get('description', None),
+                    'description': volume_info.get('description', ''),
                     'cover_url': volume_info.get('imageLinks', {}).get('thumbnail', None),
                     'volume_id': item.get('id', None)
                 })
