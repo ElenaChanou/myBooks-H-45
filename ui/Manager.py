@@ -56,7 +56,7 @@ class ScreenManager:
     def show_add(self):
         self.clear_screen()
         self.add_book_screen.pack(fill="both", expand=True)
-        #self.add_book_screen.clear_entries()
+        self.add_book_screen.clear_fields()
 
     def handle_add_new_book(self, book_data):
         try:

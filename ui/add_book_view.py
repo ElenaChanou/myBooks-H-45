@@ -10,8 +10,6 @@ class AddBookScreen(tk.Frame):
         #ΑΠΟΘΗΚΕΥΟΜΕ ΤΟΝ ΔΙΑΧΕΙΡΙΣΤΗ (Manager) ΓΙΑ ΝΑ ΤΟΝ ΕΧΕΙ ΤΟ ΑΝΤΙΚΕΙΜΕΝΟ ΣΤΗ ΜΝΗΜΗ ΤΟΥ ΚΑΙ ΝΑ ΤΟΥ ΔΙΝΕΙ ΕΝΤΟΛΕΣ ΑΡΓΟΤΕΡΑ
         self.manager = manager 
 
-        
-
         self.MainButton = tk.Button(self, text = "Αρχική", bg ="blue",fg='white',width=20, command = manager.show_main)
         self.MainButton.pack(pady=10)
 

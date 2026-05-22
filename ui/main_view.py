@@ -10,7 +10,7 @@ class MainScreen(tk.Frame):
         self.manager = manager 
         
         # Ετικέτα
-        self.label_search = tk.Label(self, text="Αναζήτηση Βιβλίου", font=("Arial", 12, "bold"))
+        self.label_search = tk.Label(self, text="Αναζήτηση Βιβλίου", font=("Courier", 12, "bold"))
         self.label_search.pack(pady=5)
         
         # Πεδίο αναζήτησης και κουμπί
@@ -19,12 +19,12 @@ class MainScreen(tk.Frame):
         self.entry_search.bind("<Return>", self.handle_search)
         
         # Κουμπί αναζήτησης
-        self.search_button = tk.Button(self, text="Αναζήτηση", command=self.handle_search, font=("Arial", 12, "italic"))
+        self.search_button = tk.Button(self, text="Αναζήτηση", command=self.handle_search, font=("Courier", 12, "italic"))
         self.search_button.pack(pady=5)
          
         # Προσθήκη πίνακα (Treeview) για εμφάνιση των δημοφιλέστερων βιβλίων στο main screen
         # Μορφοποίηση του πίνακα με στήλες για τίτλο, συγγραφέα, έτος, μέση βαθμολογία και πλήθος αξιολογήσεων
-        self.table_title = tk.Label(self, text="Λίστα Βιβλίων: Κορυφαία Βιβλία", font=("Arial", 11, "italic"), fg="gray")
+        self.table_title = tk.Label(self, text="Λίστα Βιβλίων: Κορυφαία Βιβλία", font=("Courier", 11, "italic"), fg="gray")
         self.table_title.pack(pady=(10, 0))
 
         self.columns = ("id", "title", "author", "year", "avg_rate", "total_rates")
@@ -49,11 +49,9 @@ class MainScreen(tk.Frame):
         self.tree.column("avg_rate", width=50, anchor="center")
         self.tree.column("total_rates", width=80, anchor="center")
 
-        # --- FOOTER & ΚΟΥΜΠΙΑ ---
         self.footer_frame = tk.Frame(self)
         self.footer_frame.pack(pady=10)
         
-        # Κρατήσαμε μόνο το κουμπί των λεπτομερειών στο κέντρο
         self.bookDetails_button = tk.Button(self.footer_frame, text="Προβολή Λεπτομερειών", command=self.open_details, bg="blue", fg='white', width=20)
         self.bookDetails_button.pack(side="left", padx=10)
 

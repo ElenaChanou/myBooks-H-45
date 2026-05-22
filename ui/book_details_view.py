@@ -14,14 +14,14 @@ class BookDetailsScreen(tk.Frame):
     def create_widgets(self):
         # 1. Κουμπί επιστροφής στην αρχική οθόνη
         self.back_button = tk.Button(self, text="Αρχική", command=self.manager.show_main, 
-                                     font=("Arial", 10, "bold"), bg="blue", fg='white', width=20)
+                                     font=("Courier", 10, "bold"), bg="blue", fg='white', width=20)
         self.back_button.pack(pady=10)
 
         # 2. Labels τίτλου και συγγραφέα
-        self.label_title = tk.Label(self, text="", font=("Arial", 18, "bold"))
+        self.label_title = tk.Label(self, text="", font=("Courier", 14, "bold"))
         self.label_title.pack(pady=10)
 
-        self.label_authors = tk.Label(self, text="", font=("Arial", 12))
+        self.label_authors = tk.Label(self, text="", font=("Courier", 10))
         self.label_authors.pack(pady=5)
 
         # 3. Εξώφυλλο βιβλίου
@@ -33,10 +33,10 @@ class BookDetailsScreen(tk.Frame):
         self.comments_frame.pack(pady=10, padx=20, fill="both", expand=True)
 
         # Label για τίτλο πάνω από τα σχόλια
-        tk.Label(self.comments_frame, text="Σχόλια Χρηστών", font=("Arial", 12, "bold")).pack(pady = 15)
+        tk.Label(self.comments_frame, text="Σχόλια Χρηστών", font=("Courier", 12, "bold")).pack(pady = 15)
 
         # Το Text widget με wrap="word" ώστε να κόβει το κείμενο στις λέξεις και όχι στα γράμματα
-        self.text_comments = tk.Text(self.comments_frame, height=8, wrap="word", font=("Arial", 10), state="disabled")
+        self.text_comments = tk.Text(self.comments_frame, height=8, wrap="word", font=("Courier", 10), state="disabled")
         
         # Scrollbar για το Text widget
         self.scrollbar = ttk.Scrollbar(self.comments_frame, orient="vertical", command=self.text_comments.yview)
@@ -51,6 +51,7 @@ class BookDetailsScreen(tk.Frame):
             
         self.label_title.config(text=book["title"])
         self.label_authors.config(text=f"Συγγραφέας: {book['authors']}")
+        
 
         # Φόρτωση εικόνας
         path = book.get("cover_path")
@@ -63,12 +64,13 @@ class BookDetailsScreen(tk.Frame):
             except Exception:
                 self.label_cover.config(image="", text="Σφάλμα φόρτωσης εικόνας", fg="red")
         else:
-            self.label_cover.config(image="", text="Το εξώφυλλο δεν βρέθηκε\n(No Image)", font=("Arial", 10, "italic"), bg="lightgrey", width=20, height=10)
+            self.label_cover.config(image="", text="Το εξώφυλλο δεν βρέθηκε\n(No Image)", font=("Courier", 10, "italic"), bg="lightgrey", width=20, height=10)
 
 
         # Κάνουμε ένα read-only Text widget για να εμφανίσουμε τα σχόλια
-        self.text_comments.delete("1.0", tk.END)
         self.text_comments.config(state="normal")
+        self.text_comments.delete("1.0", tk.END)
+        
         
         if not ratings:
             self.text_comments.insert(tk.END, "Δεν υπάρχουν σχόλια γιά το βιβλίο ακόμη.\n")
