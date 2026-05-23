@@ -10,5 +10,4 @@ def save_rating(user_id: int, book_id: int, rating: int, comment: str) -> bool:
     if db.get_book(book_id) is None:
         raise ValueError("Το βιβλίο δεν υπάρχει")
 
-    db.upsert_rating(user_id, book_id, rating, comment)
-    return True
+    return db.upsert_rating(user_id, book_id, rating, comment)
