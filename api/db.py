@@ -41,7 +41,7 @@ class Database_Manager:
                     isbn TEXT,
                     description TEXT,
                     cover_img TEXT,
-                    volume_id TEXT UNIQUE)'''
+                    volume_id TEXT)'''
                 cursor.execute(create_table_books)
 
                 #ΔΗΜΙΟΥΡΓΙΑ ΠΙΝΑΚΑ RATINGS
@@ -92,26 +92,26 @@ class Database_Manager:
         cover_img = book_dict.get('cover_img', None)
         volume_id = book_dict.get('volume_id', None)
 
-
-        with connection:
-            cursor = connection.cursor()
-            try:
-                cursor.execute("SELECT book_id FROM BOOKS WHERE title = ? and authors = ?",(title, authors))
-                book_exists = cursor.fetchone()
-                if book_exists:
-                    print("ΤΟ ΒΙΒΛΙΟ ΕΧΕΙ ΗΔΗ ΚΑΤΑΧΩΡΗΘΕΙ ΣΤΗΝ ΒΑΣΗ")
-                    return book_exists[0]
+        try:
+            with connection:
+                cursor = connection.cursor()
+                try:
+                    cursor.execute("SELECT book_id FROM BOOKS WHERE title = ? and authors = ?",(title, authors))
+                    book_exists = cursor.fetchone()
+                    if book_exists:
+                        print("ΤΟ ΒΙΒΛΙΟ ΕΧΕΙ ΗΔΗ ΚΑΤΑΧΩΡΗΘΕΙ ΣΤΗΝ ΒΑΣΗ")
+                        return book_exists[0]
                 
-                insert_query = "INSERT INTO BOOKS(title, authors, year, isbn, description, cover_img, volume_id) VALUES(?, ?, ?, ?, ?, ?, ?)"
-                cursor.execute(insert_query,(title, authors,year, isbn, description, cover_img, volume_id))
+                    insert_query = "INSERT INTO BOOKS(title, authors, year, isbn, description, cover_img, volume_id) VALUES(?, ?, ?, ?, ?, ?, ?)"
+                    cursor.execute(insert_query,(title, authors,year, isbn, description, cover_img, volume_id))
 
-                #connection.commit()
-                return cursor.lastrowid # Το ID του βιβλίου 
-            except Exception as fail:
-                print(f"ΑΠΟΤΥΧΙΑ ΕΙΣΑΓΩΓΗΣ: {fail}")
-                return None
-            finally:
-                connection.close()
+                    connection.commit()
+                    return cursor.lastrowid
+                except Exception as fail:
+                    print(f"ΑΠΟΤΥΧΙΑ ΕΙΣΑΓΩΓΗΣ: {fail}")
+                    return None
+        finally:
+            connection.close()
 
     # READ(find_user, get_book, search_books, get_all_books_with_stats, get_ratings):
     def find_user(self,username:str, password:str)-> int | None:
@@ -161,19 +161,20 @@ class Database_Manager:
                 # Μετατρέπει σε λεξικό τις εγγραφές
                 connection.row_factory = sqlite3.Row
                 cursor = connection.cursor()
-                query = '''
-                        SELECT USERS.username, RATINGS.rating, RATINGS.comments
-                        FROM RATINGS
-                        JOIN USERS ON RATINGS.user_id = USERS.user_id 
-                        WHERE RATINGS.book_id = ?'''
-                
-                cursor.execute(query, (book_id,))
-                rows = cursor.fetchall()
+                try:
+                    query = '''
+                            SELECT USERS.username, RATINGS.rating, RATINGS.comments
+                            FROM RATINGS
+                            JOIN USERS ON RATINGS.user_id = USERS.user_id 
+                            WHERE RATINGS.book_id = ?
+                            '''
+                    cursor.execute(query, (book_id,))
+                    rows = cursor.fetchall()
 
-                return[dict(row) for row in rows]
-        except Exception as fail:
-                print(f"ΑΠΟΤΥΧΙΑ ΑΝΑΚΤΗΣΗΣ : {fail}")
-                return []
+                    return[dict(row) for row in rows]
+                except Exception as fail:
+                    print(f"ΑΠΟΤΥΧΙΑ ΑΝΑΚΤΗΣΗΣ : {fail}")
+                    return []
         finally:
             connection.close()
 
@@ -243,52 +244,8 @@ class Database_Manager:
                     return []
         finally:
             connection.close()  
-
-    def get_read_books(self, user_id : int) -> list[dict]:
-
-        connection = self.create_connection()
-        try:
-            with connection:
-
-                connection.row_factory = sqlite3.Row
-                cursor = connection.cursor()
-
-                read_books_query = '''SELECT BOOKS.*,
-                                RATINGS.rating,
-                                RATRINGS.comments
-                                FROM BOOKS
-                                JOIN RATINGS ON BOOKS.book_id = RATINGS.book_id
-                                WHERE RATINGS.user_id = ?'''
-
-                cursor.execute(read_books_query, (user_id))
-                result = cursor.fetchall()
-                return [dict(r) for r in result]
-            
-        except Exception as fail:
-                print(f"Σφάλμα: {fail}")
-        finally:
-                connection.close()
     
-    def get_unread_books(self, user_id: int)-> list[dict]:
-        connection = self.create_connection()
-        try:
-            with connection:
-                connection.row_factory = sqlite3.Row
-                cursor = connection.cursor()
-
-                unread_books_query = '''SELECT * FROM BOOKS
-                WHERE book_id NOT IN
-                (SELECT book_id FROM RATINGS WHERE user_id = ?)'''
-                cursor.execute(unread_books_query, (user_id,))
-                result = cursor.fetchall()
-                return [dict(r) for r in result]
-        except Exception as fail:
-            print(f"ΣΦΑΛΜΑ: {fail}")
-            return []
-        finally:
-            connection.close()
-    
-    # UPDATE (Upsert λειτουργεί και για insert και για update).
+    # UPDATE (Upsert):
     def upsert_rating(self, user_id: int, book_id: int, rating: int, comments: str)-> bool:
 
         connection = self.create_connection()  
