@@ -96,14 +96,24 @@ class Database_Manager:
             with connection:
                 cursor = connection.cursor()
                 try:
+                    # 1. ΠΡΩΤΟΣ ΕΛΕΓΧΟΣ: Αν υπάρχει ήδη το volume_id από το API
+                    if volume_id:
+                        cursor.execute("SELECT book_id FROM BOOKS WHERE volume_id = ?", (volume_id,))
+                        book_exists = cursor.fetchone()
+                        if book_exists:
+                            print(f"ΤΟ ΒΙΒΛΙΟ ΥΠΑΡΧΕΙ ΗΔΗ (volume_id: {volume_id})")
+                            return book_exists[0]
+
+                    # 2. ΔΕΥΤΕΡΟΣ ΕΛΕΓΧΟΣ: Fallback με βάση τίτλο και συγγραφέα
                     cursor.execute("SELECT book_id FROM BOOKS WHERE title = ? and authors = ?",(title, authors))
                     book_exists = cursor.fetchone()
                     if book_exists:
                         print("ΤΟ ΒΙΒΛΙΟ ΕΧΕΙ ΗΔΗ ΚΑΤΑΧΩΡΗΘΕΙ ΣΤΗΝ ΒΑΣΗ")
                         return book_exists[0]
                 
+                    # 3. ΕΙΣΑΓΩΓΗ: Αν δεν βρέθηκε τίποτα από τα παραπάνω
                     insert_query = "INSERT INTO BOOKS(title, authors, year, isbn, description, cover_img, volume_id) VALUES(?, ?, ?, ?, ?, ?, ?)"
-                    cursor.execute(insert_query,(title, authors,year, isbn, description, cover_img, volume_id))
+                    cursor.execute(insert_query,(title, authors, year, isbn, description, cover_img, volume_id))
 
                     connection.commit()
                     return cursor.lastrowid
