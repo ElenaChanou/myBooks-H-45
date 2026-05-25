@@ -1,5 +1,5 @@
 from services.import_service import search_books_online, import_online_book
-from db import Database_Manager
+from db.db import Database_Manager
 
 db = Database_Manager("myBooks")
 
