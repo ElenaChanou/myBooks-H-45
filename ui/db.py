@@ -67,11 +67,12 @@ class Database_Manager:
     # CREATE(user_registration, add_book):
     def user_registration(self, username:str, password:str) -> bool:
         connection = self.create_connection()
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
         try:
              with connection:
                 cursor = connection.cursor()
                 new_user_insert = "INSERT INTO USERS (username, password) VALUES (?, ?)"
-                cursor.execute(new_user_insert,(username, password))#, (username, hashed_password))
+                cursor.execute(new_user_insert,(username, hashed_password))
                 connection.commit()
                 return True
         except Exception as fail:
@@ -84,11 +85,14 @@ class Database_Manager:
 
         connection = self.create_connection()
         
-        title = book_dict.get('title', None)
-        authors = book_dict.get('authors', None)
-        year = book_dict.get('year', None)
+        title = book_dict.get('title')
+        authors = book_dict.get('authors')
+        if not title or not authors:
+            return None
+        
+        year = book_dict.get('year', 'Άγνωστη ημερομηνία')
         isbn = book_dict.get('isbn', None)
-        description = book_dict.get('description', None)
+        description = book_dict.get('description', '')
         cover_img = book_dict.get('cover_img', None)
         volume_id = book_dict.get('volume_id', None)
 
@@ -116,19 +120,19 @@ class Database_Manager:
     # READ(find_user, get_book, search_books, get_all_books_with_stats, get_ratings):
     def find_user(self,username:str, password:str)-> int | None:
         connection = self.create_connection()
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
         try:             
             with connection:
                 cursor = connection.cursor()
 
                 search_query = "SELECT user_id from USERS WHERE username = ? AND password = ?"
-                cursor.execute(search_query,(username, password))
+                cursor.execute(search_query,(username, hashed_password))
 
                 user = cursor.fetchone()
-                #ΕΠΙΣΤΡΕΦΕΙ ΤΟ user_id Ή None
-            if user:
-                return user[0] 
-            else:
-                return None
+                return user[0] if user else None
+        except Exception as fail:
+            print(f"ΣΦΑΛΜΑ: {fail}")
+            return None
         finally:
             connection.close()
 
@@ -213,34 +217,32 @@ class Database_Manager:
             connection.close()
 
     def get_all_books_with_stats(self)-> list[dict]:
-        '''Η ΣΥΝΑΡΤΗΣΗ ΜΑΣ ΕΠΙΣΤΡΕΦΕΙ ΤΟ ΣΥΝΟΛΟ ΤΩΝ ΒΙΒΛΙΩΝ ΜΕ ΤΟΝ ΜΕΣΟ ΟΡΟ ΤΩΝ ΑΞΙΟΛΟΓΗΣΕΩΝ
-        ΚΑΙ ΤΟΝ ΑΡΙΘΜΟ ΑΥΤΩΝ.
-        '''
         connection = self.create_connection()
         try:
             with connection:
                 connection.row_factory = sqlite3.Row
                 cursor = connection.cursor()
-                try:
-                    books_stats_query = '''
-                    SELECT BOOKS.*, 
-                    ROUND(AVG(RATINGS.rating), 2) AS avg_rate,
-                    COUNT(RATINGS.rating) AS total_rates
-                    FROM BOOKS
-                    LEFT JOIN RATINGS ON BOOKS.book_id = RATINGS.book_id
-                    GROUP BY BOOKS.book_id'''
                 
-                    cursor.execute(books_stats_query)
-                    rows = cursor.fetchall()
-                    all_book_stats = [] # ΑΡΧΙΚΟΠΟΙΗΣ ΛΙΣΤΑΣ
+                # ΧΡΗΣΗ LEFT JOIN ΚΡΑΤΑΜΕ ΟΛΑ ΤΑ ΔΕΔΟΜΕΝΑ ΑΚΟΜΑ ΚΑΙ ΓΙΑ ΒΙΒΛΙΑ ΧΩΡΙΣ ΒΑΘΜΟΛΟΓΙΑ
+                books_stats_query = '''
+                SELECT BOOKS.*, 
+                ROUND(AVG(RATINGS.rating), 2) AS avg_rate,
+                COUNT(RATINGS.rating) AS total_rates
+                FROM BOOKS
+                LEFT JOIN RATINGS ON BOOKS.book_id = RATINGS.book_id
+                GROUP BY BOOKS.book_id'''
+                
+                cursor.execute(books_stats_query)
+                rows = cursor.fetchall()
+                all_book_stats = [] # ΑΡΧΙΚΟΠΟΙΗΣ ΛΙΣΤΑΣ ΜΕ ΤΑ ΛΕΞΙΚΑ - ΕΓΓΡΑΦΕΣ
 
-                    for row in rows:
-                        all_book_stats.append(dict(row))
-                    return all_book_stats
+                for row in rows:
+                    all_book_stats.append(dict(row))
+                return all_book_stats
                 
-                except Exception as fail:
-                    print(f"ΣΦΑΛΜΑ ΕΥΡΕΣΗΣ ΣΤΑΤΙΣΤΙΚΩΝ: {fail}")
-                    return []
+        except Exception as fail:
+            print(f"ΣΦΑΛΜΑ ΕΥΡΕΣΗΣ ΣΤΑΤΙΣΤΙΚΩΝ: {fail}")
+            return []
         finally:
             connection.close()  
 
@@ -255,12 +257,12 @@ class Database_Manager:
 
                 read_books_query = '''SELECT BOOKS.*,
                                 RATINGS.rating,
-                                RATRINGS.comments
+                                RATINGS.comments
                                 FROM BOOKS
                                 JOIN RATINGS ON BOOKS.book_id = RATINGS.book_id
                                 WHERE RATINGS.user_id = ?'''
 
-                cursor.execute(read_books_query, (user_id))
+                cursor.execute(read_books_query, (user_id,))
                 result = cursor.fetchall()
                 return [dict(r) for r in result]
             
@@ -278,8 +280,8 @@ class Database_Manager:
 
                 unread_books_query = '''SELECT * FROM BOOKS
                 WHERE book_id NOT IN
-                (SELECT book_id FROM RATINGS WHERE user_id? )'''                
-                cursor.execute(unread_books_query, (user_id))
+                (SELECT book_id FROM RATINGS WHERE user_id = ? )'''                
+                cursor.execute(unread_books_query, (user_id,))
                 result = cursor.fetchall()
                 return [dict(r) for r in result]
         except Exception as fail:
@@ -319,14 +321,13 @@ class Database_Manager:
                     connection.commit()
                     return True
                 except sqlite3.IntegrityError as Error:
-                    print(f"ΠΡΟΕΚΥΨΕ ΑΚΕΡΑΙΟΤΗΤΑΣ: {Error}")
+                    print(f"ΣΦΑΛΜΑ ΑΚΕΡΑΙΟΤΗΤΑΣ: {Error}")
                 return False
         finally:
             connection.close()
 
     # DELETE:
     def delete_book(self, book_id: int)-> bool:
-        #Διαγραφή βιλίων και των αξιολογήσεων τους.
         connection = self.create_connection()
         
         try:
@@ -343,7 +344,7 @@ class Database_Manager:
                 # Διαγραφή του βιβλίου από τον πίνακα BOOKS
                 cursor.execute("DELETE FROM BOOKS WHERE book_id = ?", (book_id,))
                 
-                return False
+                return True
                     
         except Exception as fail:
             print(f"ΣΦΑΛΜΑ ΚΑΤΑ ΤΗ ΔΙΑΓΡΑΦΗ: {fail}")
@@ -363,15 +364,14 @@ class Database_Manager:
                 cursor.execute("SELECT * FROM USERS WHERE user_id = ?", (user_id,))
                 user_to_delete = cursor.fetchone()
                 if not user_to_delete:
-                    print(f"ΠΛΗΡΟΦΟΡΙΑ: Δεν βρέθηκε χρήστης με ID {user_id}.")
+                    print(f"Δεν βρέθηκε χρήστης με ID {user_id}.")
                     return False    
                 # Διαγραφή των αξιολογήσεων που σχετίζονται με το χρήστη για να διατηρηθεί η ακεραιότητα των δεδομένων (Foreign Keys).
                 cursor.execute("DELETE FROM RATINGS WHERE user_id = ?", (user_id,))
                 # Διαγραφή του χρήστη από τον πίνακα USERS
                 cursor.execute("DELETE FROM USERS WHERE user_id = ?", (user_id,))
                 
-                return True
-                    
+                return True      
         except Exception as fail:
             print(f"ΣΦΑΛΜΑ ΚΑΤΑ ΤΗ ΔΙΑΓΡΑΦΗ ΧΡΗΣΤΗ: {fail}")
             return False
@@ -391,7 +391,7 @@ class Database_Manager:
                 rating_to_delete = cursor.fetchone()
 
                 if not rating_to_delete:
-                    print(f"ΠΛΗΡΟΦΟΡΙΑ: Δεν βρέθηκε αξιολόγηση με ID χρήστη {user_id} και ID βιβλίου {book_id}.")
+                    print(f"Δεν βρέθηκε αξιολόγηση με ID χρήστη {user_id} και ID βιβλίου {book_id}.")
                     return False
                 
                 cursor.execute(
