@@ -105,13 +105,17 @@ class MainScreen(tk.Frame):
                 
                 # 3. Εισαγωγή των αποτελεσμάτων στον πίνακα
                 for book in search_results:
+                    authors = book.get('authors', 'N/A')
+                    avg_rate = book.get('avg_rate')
+                    total_rates = book.get('total_rates', 'N/A')
+
                     self.tree.insert("", "end", values=(
                         book['book_id'], 
                         book['title'], 
-                        book['author'], 
+                        authors, 
                         book['year'], 
-                        f"{book['avg_rate']:.1f}" if book['avg_rate'] else "N/A", 
-                        book['total_rates']
+                        f"{avg_rate:.1f}" if avg_rate is not None else "N/A", 
+                        total_rates
                     ))
             except Exception as e:
                 messagebox.showerror("Σφάλμα Αναζήτησης", f"Υπήρξε πρόβλημα κατά την αναζήτηση:\n{e}")

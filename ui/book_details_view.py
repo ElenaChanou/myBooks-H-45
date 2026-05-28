@@ -54,7 +54,7 @@ class BookDetailsScreen(tk.Frame):
         
 
         # Φόρτωση εικόνας
-        path = book.get("cover_path")
+        path = book.get("cover_img")
         if path and os.path.exists(path):
             try:
                 img = Image.open(path)

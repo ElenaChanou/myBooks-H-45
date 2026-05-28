@@ -280,10 +280,8 @@ class Database_Manager:
                 cursor = connection.cursor()
 
                 unread_books_query = '''SELECT * FROM BOOKS
-                WHERE NOT EXISTS
-                (SELECT 1 FROM RATINGS 
-                WHERE RATINGS.book_id = BOOKS.book_id 
-                AND RATINGS.user_id = ? )'''               
+                WHERE book_id NOT IN
+                (SELECT book_id FROM RATINGS WHERE user_id = ?)'''
                 cursor.execute(unread_books_query, (user_id,))
                 result = cursor.fetchall()
                 return [dict(r) for r in result]
@@ -291,7 +289,7 @@ class Database_Manager:
             print(f"ΣΦΑΛΜΑ: {fail}")
             return []
         finally:
-            connection.close()            
+            connection.close()
     
     # UPDATE (Upsert λειτουργεί και για insert και για update).
     def upsert_rating(self, user_id: int, book_id: int, rating: int, comments: str)-> bool:
