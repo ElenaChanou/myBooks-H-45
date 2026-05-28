@@ -1,6 +1,6 @@
 import sqlite3
 import hashlib
-import os
+
 
 
 class Database_Manager:
@@ -73,11 +73,12 @@ class Database_Manager:
                 cursor = connection.cursor()
                 new_user_insert = "INSERT INTO USERS (username, password) VALUES (?, ?)"
                 cursor.execute(new_user_insert,(username, hashed_password))
-                connection.commit()
                 return True
+             
         except Exception as fail:
             print(f"ΣΦΑΛΜΑ ΚΑΤΑ ΤΗΝ ΕΓΓΡΑΦΗ ΤΟΥ ΧΡΗΣΤΗ: {fail}")
             return False
+        
         finally:
             connection.close()  
 
@@ -87,20 +88,20 @@ class Database_Manager:
         
         title = book_dict.get('title')
         authors = book_dict.get('authors')
+
         if not title or not authors:
             return None
         
-        year = book_dict.get('year', 'Άγνωστη ημερομηνία')
+        year = book_dict.get('year', 'Άγνωστη Ημερομηνία')
         isbn = book_dict.get('isbn', None)
         description = book_dict.get('description', '')
         cover_img = book_dict.get('cover_img', None)
         volume_id = book_dict.get('volume_id', None)
 
-
         with connection:
             cursor = connection.cursor()
             try:
-                cursor.execute("SELECT book_id FROM BOOKS WHERE title = ? and authors = ?",(title, authors))
+                cursor.execute("SELECT book_id FROM BOOKS WHERE title = ? and authors = ?", (title, authors))
                 book_exists = cursor.fetchone()
                 if book_exists:
                     print("ΤΟ ΒΙΒΛΙΟ ΕΧΕΙ ΗΔΗ ΚΑΤΑΧΩΡΗΘΕΙ ΣΤΗΝ ΒΑΣΗ")
@@ -108,9 +109,8 @@ class Database_Manager:
                 
                 insert_query = "INSERT INTO BOOKS(title, authors, year, isbn, description, cover_img, volume_id) VALUES(?, ?, ?, ?, ?, ?, ?)"
                 cursor.execute(insert_query,(title, authors,year, isbn, description, cover_img, volume_id))
-
-                #connection.commit()
                 return cursor.lastrowid # Το ID του βιβλίου 
+            
             except Exception as fail:
                 print(f"ΑΠΟΤΥΧΙΑ ΕΙΣΑΓΩΓΗΣ: {fail}")
                 return None
@@ -207,7 +207,7 @@ class Database_Manager:
                         cursor.execute(search_sql, (search_term, search_term, search_term))
 
                     rows = cursor.fetchall()
-                    #Επιστρέφουμε το αποτέλεσμα σε κανονικό λεξικό της Python
+                    # Επιστρέφουμε το αποτέλεσμα σε κανονικό λεξικό της Python
                     return [dict(row) for row in rows]
             
                 except Exception as fail:
@@ -259,7 +259,7 @@ class Database_Manager:
                                 RATINGS.rating,
                                 RATINGS.comments
                                 FROM BOOKS
-                                JOIN RATINGS ON BOOKS.book_id = RATINGS.book_id
+                                INNER JOIN RATINGS ON BOOKS.book_id = RATINGS.book_id
                                 WHERE RATINGS.user_id = ?'''
 
                 cursor.execute(read_books_query, (user_id,))
@@ -268,6 +268,7 @@ class Database_Manager:
             
         except Exception as fail:
                 print(f"Σφάλμα: {fail}")
+                return []
         finally:
                 connection.close()
     
@@ -279,13 +280,16 @@ class Database_Manager:
                 cursor = connection.cursor()
 
                 unread_books_query = '''SELECT * FROM BOOKS
-                WHERE book_id NOT IN
-                (SELECT book_id FROM RATINGS WHERE user_id = ? )'''                
+                WHERE NOT EXISTS
+                (SELECT 1 FROM RATINGS 
+                WHERE RATINGS.book_id = BOOKS.book_id 
+                AND RATINGS.user_id = ? )'''               
                 cursor.execute(unread_books_query, (user_id,))
                 result = cursor.fetchall()
                 return [dict(r) for r in result]
         except Exception as fail:
             print(f"ΣΦΑΛΜΑ: {fail}")
+            return []
         finally:
             connection.close()            
     
@@ -333,7 +337,7 @@ class Database_Manager:
         try:
             with connection: 
                 cursor = connection.cursor()
-                #  Αναζήτηση του βιβλίου για να επιβεβαιώσουμε ότι υπάρχει πριν προσπαθήσουμε να το διαγράψουμε.
+                # Πρώτα select για να επιβεβαιώσουμε ότι υπάρχει το βιβλίο που θέλουμε να διαγράψουμε.
                 cursor.execute("SELECT * FROM BOOKS WHERE book_id = ?", (book_id,))
                 book_to_delete = cursor.fetchone()
                 if not book_to_delete:
@@ -358,7 +362,7 @@ class Database_Manager:
         connection = self.create_connection()
         
         try:
-            with connection: # Transaction starts
+            with connection: 
                 cursor = connection.cursor()
                 # Αναζήτηση του χρήστη για να επιβεβαιώσουμε ότι υπάρχει πριν προσπαθήσουμε να τον διαγράψουμε.
                 cursor.execute("SELECT * FROM USERS WHERE user_id = ?", (user_id,))
@@ -366,9 +370,9 @@ class Database_Manager:
                 if not user_to_delete:
                     print(f"Δεν βρέθηκε χρήστης με ID {user_id}.")
                     return False    
-                # Διαγραφή των αξιολογήσεων που σχετίζονται με το χρήστη για να διατηρηθεί η ακεραιότητα των δεδομένων (Foreign Keys).
+                # Πρώτα διαγραφή των αξιολογήσεων που σχετίζονται με τον χρήστη για να διατηρηθεί η ακεραιότητα των δεδομένων (Foreign Keys).
                 cursor.execute("DELETE FROM RATINGS WHERE user_id = ?", (user_id,))
-                # Διαγραφή του χρήστη από τον πίνακα USERS
+                # Έπειτα διαγραφή του χρήστη από τον πίνακα USERS
                 cursor.execute("DELETE FROM USERS WHERE user_id = ?", (user_id,))
                 
                 return True      
@@ -386,7 +390,7 @@ class Database_Manager:
         try:
             with connection: 
                 cursor = connection.cursor()
-                #Ευρεση της αξιολόγησης για να επιβεβαιώσουμε ότι υπάρχει πριν προσπαθήσουμε να την διαγράψουμε.
+                # Πρώτα select για να επιβεβαιώσουμε ότι υπάρχει η αξιολόγηση που θέλουμε να διαγράψουμε.
                 cursor.execute("SELECT * FROM RATINGS WHERE user_id = ? AND book_id = ?", (user_id, book_id))
                 rating_to_delete = cursor.fetchone()
 
@@ -394,11 +398,9 @@ class Database_Manager:
                     print(f"Δεν βρέθηκε αξιολόγηση με ID χρήστη {user_id} και ID βιβλίου {book_id}.")
                     return False
                 
-                cursor.execute(
-                    "DELETE FROM RATINGS WHERE user_id = ? AND book_id = ?", 
-                    (user_id, book_id))
-                return True
-                    
+                cursor.execute("DELETE FROM RATINGS WHERE user_id = ? AND book_id = ?", (user_id, book_id))
+                return True  
+            
         except Exception as fail:
             print(f"ΣΦΑΛΜΑ ΚΑΤΑ ΤΗ ΔΙΑΓΡΑΦΗ ΑΞΙΟΛΟΓΗΣΗΣ: {fail}")
             return False
