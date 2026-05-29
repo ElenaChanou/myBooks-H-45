@@ -88,7 +88,7 @@ class ManualBookWindow(ctk.CTkToplevel):
             # Α. Ανοίγουμε την εικόνα από το δίσκο
             pil_image = Image.open(filename)
             
-            # Β. Την κάνουμε resize (αλλαγή μεγέθους) για να χωράει όμορφα στο παράθυρό μας
+            # Β. Την κάνουμε resize (αλλαγή μεγέθους) για να χωράει  στο παράθυρό 
             # (π.χ. 120 πλάτος, 180 ύψος)
             pil_image_resized = pil_image.resize((120, 180))
             
