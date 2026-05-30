@@ -84,26 +84,39 @@ class Database_Manager:
 
         connection = self.create_connection()
         
-        title = book_dict.get('title', None)
-        authors = book_dict.get('authors', None)
-        year = book_dict.get('year', None)
+        title = book_dict.get('title')
+        authors = book_dict.get('authors')
+
+        if not title or not authors:
+            return None
+        
+        year = book_dict.get('year', 'Άγνωστη Ημερομηνία')
         isbn = book_dict.get('isbn', None)
-        description = book_dict.get('description', None)
+        description = book_dict.get('description', '')
         cover_img = book_dict.get('cover_img', None)
         volume_id = book_dict.get('volume_id', None)
-
         try:
             with connection:
                 cursor = connection.cursor()
                 try:
+                 # 1. ΠΡΩΤΟΣ ΕΛΕΓΧΟΣ: Αν υπάρχει ήδη το volume_id από το API
+                    if volume_id:
+                        cursor.execute("SELECT book_id FROM BOOKS WHERE volume_id = ?", (volume_id,))
+                        book_exists = cursor.fetchone()
+                        if book_exists:
+                            print(f"ΤΟ ΒΙΒΛΙΟ ΥΠΑΡΧΕΙ ΗΔΗ (volume_id: {volume_id})")
+                            return book_exists[0]
+
+                    # 2. ΔΕΥΤΕΡΟΣ ΕΛΕΓΧΟΣ: Fallback με βάση τίτλο και συγγραφέα
                     cursor.execute("SELECT book_id FROM BOOKS WHERE title = ? and authors = ?",(title, authors))
                     book_exists = cursor.fetchone()
                     if book_exists:
                         print("ΤΟ ΒΙΒΛΙΟ ΕΧΕΙ ΗΔΗ ΚΑΤΑΧΩΡΗΘΕΙ ΣΤΗΝ ΒΑΣΗ")
                         return book_exists[0]
                 
+                    # 3. ΕΙΣΑΓΩΓΗ: Αν δεν βρέθηκε τίποτα από τα παραπάνω
                     insert_query = "INSERT INTO BOOKS(title, authors, year, isbn, description, cover_img, volume_id) VALUES(?, ?, ?, ?, ?, ?, ?)"
-                    cursor.execute(insert_query,(title, authors,year, isbn, description, cover_img, volume_id))
+                    cursor.execute(insert_query,(title, authors, year, isbn, description, cover_img, volume_id))
 
                     connection.commit()
                     return cursor.lastrowid

@@ -2,7 +2,7 @@ import sys
 import os
 import customtkinter as ctk
 
-# Προσθήκη του root path στο system path για να δουλεύουν σωστά τα imports από τους υποφακέλους
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from db.db import Database_Manager
