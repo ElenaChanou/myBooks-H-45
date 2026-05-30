@@ -2,7 +2,7 @@ from api.google_books import search_google_books
 from api.covers import download_cover
 
 # Κάνουμε import την κλάση από το db.py που βρίσκεται στο root
-from db import Database_Manager
+from db.db import Database_Manager
 
 db_manager = Database_Manager("myBooks")
 

@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from ui.manual_book_window import ManualBookWindow
+from services.import_service import search_books_online
 
 class AddBookWindow(ctk.CTkToplevel):
     def __init__(self,parent):
@@ -11,7 +12,7 @@ class AddBookWindow(ctk.CTkToplevel):
         self.create_widgets()
         
     def create_widgets(self):
-        #αλλαγή # 1. φτιάχνουμε ένα κεντρικό "κουτί" και του λέμε να κάτσει ακριβώς στη μέση (expand=True)
+        # 1. φτιάχνουμε ένα κεντρικό "κουτί" και του λέμε να κάτσει ακριβώς στη μέση (expand=True)
         self.main_container = ctk.CTkFrame(self, fg_color="transparent")
         self.main_container.pack(expand=True)
 
@@ -31,25 +32,27 @@ class AddBookWindow(ctk.CTkToplevel):
         self.button_search_add = ctk.CTkButton(self.main_container, text="Αναζήτηση και Προσθήκη", command = self.search_and_add)
         self.button_search_add.grid(row=3, column = 0, padx=5, pady=(10,5))
 
+    # --- Η συνάρτηση ήρθε πιο αριστερά, στην ίδια ευθεία με το create_widgets ---
     def search_and_add(self):
-        #title = self.entry_title.get().strip().lower()
+        title = self.entry_title.get().strip()
         
-        #author = self.entry_author.get().strip().lower()
+        # Αν ο χρήστης δεν έγραψε τίποτα, μην κάνεις τίποτα
+        if not title:
+            return
 
-        #print(title, author)
+        print(f"--- Ψάχνω στο ίντερνετ για: {title} ---")
+        
+        # ΚΑΛΟΥΜΕ ΤΟ ΠΡΑΓΜΑΤΙΚΟ BACKEND ΑΝΤΙ ΓΙΑ ΤΗΝ ΕΙΚΟΝΙΚΗ ΒΑΣΗ
+        results = search_books_online(title)
 
-        title = self.entry_title.get().strip().lower()
-        author = self.entry_author.get().strip().lower()
-
-        # Εικονική "βάση" για να τεστάρουμε τη λογική μας
-        mock_api_results = ["1984", "ο μικρος πριγκιπας"]
-
-        if title in mock_api_results:
-            print(f"Επιτυχία! Το βιβλίο '{title}' βρέθηκε στο ίντερνετ.")
-            # Εδώ στο μέλλον θα αποθηκεύεται αυτόματα
+        if results:
+            print(f"Επιτυχία! Βρέθηκαν {len(results)} αποτελέσματα στο ίντερνετ.")
+            # Εκτυπώνουμε το πρώτο αποτέλεσμα για να δούμε αν δουλεύει
+            print("ΠΡΩΤΟ ΑΠΟΤΕΛΕΣΜΑ:", results[0]['title'], "-", results[0]['authors'])
+            
+            # Στο μέλλον, εδώ θα καλούμε την import_online_book για αποθήκευση
         else:
             print(f"Το βιβλίο '{title}' ΔΕΝ βρέθηκε. Άνοιγμα χειροκίνητης εισαγωγής...")
-            # Η μαγική γραμμή που ανοίγει το νέο σου παράθυρο!
             ManualBookWindow(self)
 
 if __name__ == "__main__":
