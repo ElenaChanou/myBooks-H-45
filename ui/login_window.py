@@ -60,8 +60,9 @@ class LoginFrame(ctk.CTkFrame):
             self.controller.main_frame.welcome_label.configure(text=f"Καλώς ήρθες, {username}")
             
         else:
+            # Αν επιστρέψει None, η σύνδεση απέτυχε
             print("--- Αποτυχία Σύνδεσης ---")
-            print(f"Δοκιμή με User: {username} και Pass: {password}")
+            print(f"Αποτυχημένη δοκιμή με User: {username}")
             print("-------------------------") 
 
             # Ενημέρωση του κόκκινου label στην οθόνη
