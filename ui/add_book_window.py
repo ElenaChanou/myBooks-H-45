@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from manual_book_window import ManualBookWindow
+from ui.manual_book_window import ManualBookWindow
 
 class AddBookWindow(ctk.CTkToplevel):
     def __init__(self,parent):

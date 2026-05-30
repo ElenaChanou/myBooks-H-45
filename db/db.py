@@ -178,6 +178,25 @@ class Database_Manager:
         finally:
             connection.close()
 
+
+def get_user_ratings(self, user_id: int)-> list[dict]:
+        """Επιστρέφει όλα τα book_id που έχει αξιολογήσει ένας συγκεκριμένος χρήστης."""
+        connection = self.create_connection()
+        try:
+            with connection:
+                connection.row_factory = sqlite3.Row
+                cursor = connection.cursor()
+                try:
+                    cursor.execute("SELECT book_id FROM RATINGS WHERE user_id = ?", (user_id,))
+                    rows = cursor.fetchall()
+                    return [dict(row) for row in rows]
+                except Exception as fail:
+                    print(f"ΑΠΟΤΥΧΙΑ ΑΝΑΚΤΗΣΗΣ ΑΞΙΟΛΟΓΗΣΕΩΝ ΧΡΗΣΤΗ: {fail}")
+                    return []
+        finally:
+            connection.close()
+
+
     def search_books(self, query: str)-> list[dict]:
         """
         Η συνάρτηση κάνει αναζήτηση βιβλίων με βάση τον τίτλο, συγγραφέα ή ISBN 

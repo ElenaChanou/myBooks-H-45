@@ -1,33 +1,30 @@
-import hashlib   # built-in βιβλιοθήκη για κρυπτογράφηση
-import sys 
+import hashlib
+import sys
 import os
 
+# Βοηθάει την Python να βρει τον φάκελο db
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from db.db import get_user_by_username
+from db.db import Database_Manager
+
+# Δημιουργούμε ένα instance του Database_Manager για να μιλήσουμε στη βάση
+db = Database_Manager("myBooks")
 
 def hash_password(password: str) -> str:
     """
     Δέχεται plaintext string, επιστρέφει SHA-256 hex digest.
-    Χρησιμοποιείται και για τη δημιουργία demo users στο db.py
-    ώστε τα hashes να είναι συμβατά.
     """
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 def login(username: str, password: str) -> dict | None:
     """
     Ελέγχει credentials και επιστρέφει user dict ή None.
-
-    Returns:
-        {"id": int, "username": str}  αν το login είναι επιτυχές
-        None                          αν ο χρήστης δεν υπάρχει ή λάθος password
     """
-    user = get_user_by_username(username)
+    # Χρησιμοποιούμε τη δική σου μέθοδο find_user από το db.py
+    user_id = db.find_user(username, password)
     
-    if user is None:
-        return None
-    
-    if hash_password(password) == user["password"]:
-        return {"id": user["id"], "username": user["username"]}
+    if user_id is not None:
+        # Αν το login είναι επιτυχές, επιστρέφουμε το dictionary 
+        return {"id": user_id, "username": username}
     
     return None

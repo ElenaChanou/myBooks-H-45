@@ -1,9 +1,9 @@
 from tkinter import ttk
 import tkinter as tk
 from tkinter import messagebox
-from book_details_window import BookDetailsWindow
+from ui.book_details_window import BookDetailsWindow
 import customtkinter as ctk
-from add_book_window import AddBookWindow
+from ui.add_book_window import AddBookWindow
 
 
 class MainFrame(ctk.CTkFrame):
