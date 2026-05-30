@@ -1,6 +1,5 @@
 import sqlite3
 import hashlib
-import os
 
 
 class Database_Manager:
@@ -41,7 +40,7 @@ class Database_Manager:
                     isbn TEXT,
                     description TEXT,
                     cover_img TEXT,
-                    volume_id TEXT)'''
+                    volume_id TEXT UNIQUE)'''
                 cursor.execute(create_table_books)
 
                 #ΔΗΜΙΟΥΡΓΙΑ ΠΙΝΑΚΑ RATINGS
@@ -66,6 +65,8 @@ class Database_Manager:
     # Θέλουμε όλες τις CRUD λειτουργίες (CREATE, READ, UPDATE, DELETE) για χρήστες, βιβλία και αξιολογήσεις.
     # CREATE(user_registration, add_book):
     def user_registration(self, username:str, password:str) -> bool:
+        '''Η συνάρτηση αυτή προσθέτει έναν νέο χρήστη στη βάση δεδομένων. 
+        Επιστρέφει True αν η εγγραφή ήταν επιτυχής, διαφορετικά επιστρέφει False.'''
         connection = self.create_connection()
         try:
              with connection:
@@ -128,6 +129,7 @@ class Database_Manager:
 
     # READ(find_user, get_book, search_books, get_all_books_with_stats, get_ratings):
     def find_user(self,username:str, password:str)-> int | None:
+        '''Η συνάρτηση επιστρέφει το user_id αν βρεθεί χρήστης με τα συγκεκριμένα username και password, διαφορετικά επιστρέφει None.'''
         connection = self.create_connection()
         try:             
             with connection:
@@ -168,6 +170,7 @@ class Database_Manager:
             connection.close()
     
     def get_ratings(self, book_id: int)-> list[dict]:
+        '''Η συνάρτηση επιστρέφει μία λίστα από λεξικά με τις αξιολογήσεις ενός βιβλίου, διαφορετικά επιστρέφει μία κενή λίστα.'''
         connection = self.create_connection()
         try:
             with connection:
@@ -279,6 +282,9 @@ class Database_Manager:
     
     # UPDATE (Upsert):
     def upsert_rating(self, user_id: int, book_id: int, rating: int, comments: str)-> bool:
+        ''' Η συνάρτηση αυτή κάνει upsert (update ή insert) μίας αξιολόγησης. 
+        Άν υπάρχει ήδη αξιολόγηση γιά το συγκεκριμένο user_id και book_id, τότε ενημερώνει την υπάρχουσα εγγραφή.
+        Άν δεν υπάρχει, δημιουργεί μία νέα εγγραφή.'''
 
         connection = self.create_connection()  
         if rating < 1 or rating > 5:
@@ -309,14 +315,14 @@ class Database_Manager:
                     connection.commit()
                     return True
                 except sqlite3.IntegrityError as Error:
-                    print(f"ΠΡΟΕΚΥΨΕ ΑΚΕΡΑΙΟΤΗΤΑΣ: {Error}")
+                    print(f"ΠΡΟΕΚΥΨΕ ΣΦΑΛΜΑ ΑΚΕΡΑΙΟΤΗΤΑΣ: {Error}")
                 return False
         finally:
             connection.close()
 
     # DELETE:
     def delete_book(self, book_id: int)-> bool:
-        #Διαγραφή βιλίων και των αξιολογήσεων τους.
+        '''Διαγραφή βιβλίων και των αξιολογήσεων τους.'''
         connection = self.create_connection()
         
         try:
@@ -343,7 +349,7 @@ class Database_Manager:
             connection.close()
 
     def delete_user(self, user_id: int)-> bool:
-    #Διαγράφει τον χρήστη και όλες τις αξιολογήσεις του για να διατηρηθεί η ακεραιότητα των δεδομένων.
+        '''Διαγράφει τον χρήστη και όλες τις αξιολογήσεις του για να διατηρηθεί η ακεραιότητα των δεδομένων.'''
         connection = self.create_connection()
         
         try:
@@ -370,7 +376,8 @@ class Database_Manager:
             connection.close()
 
     def delete_rating(self, user_id: int, book_id: int)-> bool:
-        #Διαγραφή μίας αξιολόγησης με βάση το user_id και book_id, καθώς αυτά τα δύο πεδία είναι μοναδικά μαζί (UNIQUE(user_id, book_id)).
+        '''Διαγραφή μίας αξιολόγησης με βάση το user_id και book_id, 
+        καθώς αυτά τα δύο πεδία είναι μοναδικά μαζί (UNIQUE(user_id, book_id)).'''
         connection = self.create_connection()
         
         try:
