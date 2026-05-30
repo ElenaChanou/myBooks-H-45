@@ -1,6 +1,5 @@
 import customtkinter as ctk
 from manual_book_window import ManualBookWindow
-from services.import_service import search_books_online, import_online_book
 
 class AddBookWindow(ctk.CTkToplevel):
     def __init__(self,parent):
@@ -41,42 +40,20 @@ class AddBookWindow(ctk.CTkToplevel):
 
         title = self.entry_title.get().strip().lower()
         author = self.entry_author.get().strip().lower()
-       
-        #Έλεγχος αν τα πεδία είναι κενά
-        if not title:
-            print("Παρακαλώ συμπληρώστε τουλάχιστον τον τίτλο.")
-            return
 
         # Εικονική "βάση" για να τεστάρουμε τη λογική μας
-        #mock_api_results = ["1984", "ο μικρος πριγκιπας"]
-        #αντικατασταση mock dατα με ερωτηση στο api(internet)
-        query = f"{title} {author}".strip()
-        api_results= search_books_online(query)#κληση api
+        mock_api_results = ["1984", "ο μικρος πριγκιπας"]
 
-        if api_results:
-            #Βρήκαμε κάτι. Παίρνουμε το 1ο αποτέλεσμα
-            first_book = api_results[0]
-            print(f"Βρέθηκε το βιβλίο: {first_book.get('title')}. Γίνεται αποθήκευση...")
-            
-            #καλώ τη βιβλιοθήκη για να το σώσει
-            new_id = import_online_book(first_book)
-
-            if new_id:
-                print(f"Επιτυχία! Το βιβλίο αποθηκεύτηκε με ID: {new_id}")
-                self.destroy()  # Κλείνει αυτόματα το παράθυρο
-            else:
-                print("Σφάλμα: Δεν μπόρεσε να αποθηκευτεί στη βάση.")
-
+        if title in mock_api_results:
+            print(f"Επιτυχία! Το βιβλίο '{title}' βρέθηκε στο ίντερνετ.")
+            # Εδώ στο μέλλον θα αποθηκεύεται αυτόματα
         else:
-            # Δεν βρέθηκε τίποτα στο ίντερνετ
-            print("Το βιβλίο ΔΕΝ βρέθηκε. Άνοιγμα χειροκίνητης εισαγωγής...")
-            
-            ManualBookWindow(self) # Η  γραμμή που ανοίγει το νέο  παράθυρο
-           
-          
+            print(f"Το βιβλίο '{title}' ΔΕΝ βρέθηκε. Άνοιγμα χειροκίνητης εισαγωγής...")
+            # Η μαγική γραμμή που ανοίγει το νέο σου παράθυρο!
+            ManualBookWindow(self)
 
 if __name__ == "__main__":
-    # Φτιάχνουμε ένα αόρατο/μικρό βασικό παράθυρο-γονιό για να πατήσει πάνω του δοκιμαστικα
+    # Φτιάχνουμε ένα αόρατο/μικρό βασικό παράθυρο-γονιό για να πατήσει πάνω του το δικό μας
     app = ctk.CTk()
     app.geometry("10x10") 
     

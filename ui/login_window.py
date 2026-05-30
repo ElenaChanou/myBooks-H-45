@@ -1,10 +1,6 @@
 import tkinter as tk
 import customtkinter as ctk
-from services.auth_service import login
-from db.db import Database_Manager
 
-# Φτιάχνουμε ένα αντικείμενο για να μιλάμε στη βάση "myBooks"
-db_manager = Database_Manager("myBooks")
 
 class LoginFrame(ctk.CTkFrame):
     def __init__(self, parent,controller):
@@ -45,35 +41,23 @@ class LoginFrame(ctk.CTkFrame):
 
 
     def handle_login(self):
-        username = self.entry_user.get().strip()
-        password = self.entry_password.get().strip()
+        username = self.entry_user.get()
+        password = self.entry_password.get()
 
         print(f"--- Προσπάθεια Σύνδεσης ---")
         print(f"Username: {username}")
         print(f"Password: {password}")
         print("-" * 20)
-        # 1. Καλώ  το backend για να ελέγξει τα στοιχεία στη βάση
-        
-        user_data = login(username, password)
-        
+
         # Δοκιμή με admin και 1234
-        #if username == "admin" and password == "1234":
-         #   print("--- Επιτυχής Σύνδεση ---")
-
-        #2. Έλεγχος απάντησης
-        
-        if user_data: 
-
-            #αν επιστρέψει λεξικό, η σύνδεση πέτυχε
+        if username == "admin" and password == "1234":
             print("--- Επιτυχής Σύνδεση ---")
-            # Καθαρίζει τυχόν παλιό μήνυμα λάθους
-            self.error_label.configure(text="")
-            # Ανοίγει το Main Window
+
+            # 1. ΠΡΩΤΑ ανοίγουμε το Main Window (ώστε να δημιουργηθεί το welcome_label)
             self.controller.show_main_screen() 
             
-            # Αλλάζουμε το κείμενο με το πραγματικό username που  έφερε η βάση
-            actual_username = user_data["username"]
-            self.controller.main_frame.welcome_label.configure(text=f"Καλώς ήρθες, {actual_username}")
+            # 2. ΜΕΤΑ του αλλάζουμε το κείμενο!
+            self.controller.main_frame.welcome_label.configure(text=f"Καλώς ήρθες, {username}")
             
         else:
             # Αν επιστρέψει None, η σύνδεση απέτυχε
@@ -106,8 +90,7 @@ class LoginFrame(ctk.CTkFrame):
 
             new_u = entry_new_user.get().strip()
             new_p = entry_new_pass.get().strip()
-            
-            # Έλεγχος αν άφησε κενά τα πεδία
+
             if not new_u or not new_p:
                 print("Σφάλμα: Πρέπει να συμπληρωθούν και τα δύο πεδία!")
                 return
@@ -116,19 +99,11 @@ class LoginFrame(ctk.CTkFrame):
             print("\n--- ΑΙΤΗΜΑ ΝΕΑΣ ΕΓΓΡΑΦΗΣ ---")
             print(f"Username: {new_u}")
             print(f"Password: {new_p}")
-            
-            #Καλούμε τη συνάρτηση της βάσης 
-            success = db_manager.user_registration(new_u, new_p)
-            #Ελέγχουμε αν η εγγραφή πέτυχε
-            if success:
-                print("Η εγγραφή ολοκληρώθηκε με επιτυχία στη βάση!")
-                print("----------------------------\n")
-                reg_window.destroy() # Κλείνει το μικρό παράθυρο μόνο αν ειναι επιτυχής η εγγραφη
-            else:
-                print("Αποτυχία εγγραφής! Ίσως το username υπάρχει ήδη.")
-                print("----------------------------\n")
+            print("-> Εδώ θα κληθεί η συνάρτηση της Βάσης Δεδομένων (π.χ. db.add_user(u, p))")
+            print("----------------------------\n")
 
-        #  το κουμπί που κάθεται έξω από τη συνάρτηση
+            reg_window.destroy()
+
         save_button = ctk.CTkButton(reg_window, text="Ολοκλήρωση!", command = save_new_user, font =("Arial", 11, "bold"), fg_color = "#4caf50", text_color="white")
         save_button.pack(pady=20)
 
