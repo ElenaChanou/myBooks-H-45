@@ -179,7 +179,7 @@ class Database_Manager:
             connection.close()
 
 
-def get_user_ratings(self, user_id: int)-> list[dict]:
+    def get_user_ratings(self, user_id: int)-> list[dict]:
         """Επιστρέφει όλα τα book_id που έχει αξιολογήσει ένας συγκεκριμένος χρήστης."""
         connection = self.create_connection()
         try:
