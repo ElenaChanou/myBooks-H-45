@@ -1,10 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
-from PIL import Image, ImageTk
+from PIL import Image  # Κρατάμε μόνο το Image, σβήσαμε το ImageTk (Lint Fix)
 import os
 from tkinter import messagebox
 import customtkinter as ctk
 from services.rating_service import save_rating
+from api.covers import download_cover
 
 class BookDetailsWindow(ctk.CTkFrame):
     def __init__(self, master, book_data, on_save):
@@ -32,8 +33,35 @@ class BookDetailsWindow(ctk.CTkFrame):
         print("--- ΔΕΔΟΜΕΝΑ ΠΟΥ ΕΦΤΑΣΑΝ ΣΤΙΣ ΛΕΠΤΟΜΕΡΕΙΕΣ ---")
         print(self.book)
         
-        # Προσωρινό Mock για το εξώφυλλο (UI Test)
-        self.label_cover = ctk.CTkLabel(self, text="Το εξώφυλλο δεν βρέθηκε\n(UI Test)", fg_color="gray20", width=150, height=220, corner_radius=10)
+        # --- ΦΟΡΤΩΣΗ ΕΙΚΟΝΑΣ ΕΞΩΦΥΛΛΟΥ (Απόλυτο Μονοπάτι) ---
+        cover_path = self.book.get("cover_img")
+        image_loaded = False
+
+        if cover_path:
+            absolute_cover_path = os.path.abspath(cover_path)
+            if os.path.exists(absolute_cover_path):
+                try:
+                    pil_img = Image.open(absolute_cover_path)
+                    # CTkImage με τις σωστές διαστάσεις του cover.py (128x192)
+                    self.cover_image = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(128, 192))
+                    
+                    self.label_cover = ctk.CTkLabel(self, text="", image=self.cover_image)
+                    image_loaded = True
+                except Exception as e:
+                    print(f"Σφάλμα φόρτωσης τοπικής εικόνας: {e}")
+
+        if not image_loaded:
+            # Καλαίσθητο placeholder αν δεν βρεθεί η εικόνα
+            self.label_cover = ctk.CTkLabel(
+                self, 
+                text="📘\nΔεν βρέθηκε\nεξώφυλλο", 
+                font=("arial", 12, "italic"), 
+                width=128, 
+                height=192, 
+                fg_color="#2b2b2b", 
+                corner_radius=10
+            )
+
         self.label_cover.grid(row=3, column=0, pady=10)
 
         # Container για τα σχόλια
@@ -41,8 +69,18 @@ class BookDetailsWindow(ctk.CTkFrame):
         self.comments_frame.grid(row=4, column=0, sticky="nsew", pady=10, padx=10)
         self.comments_frame.grid_columnconfigure(0, weight=1)
 
-       
-        
+        # Ρύθμιση χρωμάτων για το Treeview (Dark Mode Fix)
+        style = ttk.Style()
+        style.theme_use("default")
+        style.configure("Treeview",
+                        background="#2a2a2a",
+                        foreground="white",
+                        fieldbackground="#2a2a2a",
+                        rowheight=25)
+        style.configure("Treeview.Heading",
+                        background="#333333",
+                        foreground="white",
+                        font=("arial", 11, "bold"))
 
         # Λίστα σχολίων Treeview
         self.tree_comments = ttk.Treeview(self.comments_frame, columns="comment", show="headings", height=5)
@@ -71,19 +109,17 @@ class BookDetailsWindow(ctk.CTkFrame):
         self.save_button = ctk.CTkButton(self, text="Αποθήκευση", command=self.handle_save, fg_color="#4CAF50", hover_color="#45a049", text_color="white")
         self.save_button.grid(row=9, column=0, pady=15)
 
-      # Φόρτωση σχολίων με υποστήριξη για Dict (με/χωρίς s) και Tuple
+        # Φόρτωση σχολίων με υποστήριξη για Dict (με/χωρίς s) και Tuple
         print("--- DEBUG RATINGS DATA ---")
         for r in self.ratings:
             print("DATA TYPE CHECK:", type(r), "->", r)
             
             if isinstance(r, dict):
-                # Αν είναι λεξικό, ελέγχουμε και το 'comments' και το 'comment'
                 rating_val = r.get('rating', 0)
                 username = r.get('username', 'Άγνωστος')
                 comment_text = r.get('comments', r.get('comment', ''))
             
             elif isinstance(r, (list, tuple)):
-                # Αν είναι tuple/list (όπως στο προηγούμενο βιβλίο)
                 rating_val = r[2] if len(r) > 2 else 0
                 username = f"Χρήστης #{r[1]}" if len(r) > 1 else "Άγνωστος"
                 comment_text = r[3] if len(r) > 3 else ''
@@ -104,9 +140,15 @@ class BookDetailsWindow(ctk.CTkFrame):
             
         book_id = self.book.get('book_id')
         
-        user_id = 1
-        if hasattr(self.master, 'current_user') and self.master.current_user:
-            user_id = self.master.current_user.get('id', 1)
+        # Έλεγχος Συνεδρίας Χρήστη (High Severity Copilot Fix)
+        if not hasattr(self.master, 'current_user') or not self.master.current_user:
+            messagebox.showerror("Σφάλμα", "Δεν βρέθηκε ενεργή συνεδρία χρήστη. Παρακαλώ συνδεθείτε ξανά.")
+            return
+            
+        user_id = self.master.current_user.get('id')
+        if not user_id:
+            messagebox.showerror("Σφάλμα", "Το ID του χρήστη δεν είναι έγκυρο. Η αποθήκευση ακυρώθηκε.")
+            return
         
         try:
             save_rating(user_id, book_id, int(rating), comment)
