@@ -3,14 +3,11 @@ from tkinter import ttk
 from PIL import Image,ImageTk
 import os
 from tkinter import messagebox
-import customtkinter as ctk
-#from api_man import load_image_from_url
 
 
-class BookDetailsWindow(ctk.CTkFrame):
+class BookDetailsWindow(tk.Toplevel):
     def __init__(self,master, book_data, on_save):#αλλαγή στο μέλλον θα μπει μια παράμετρος book_data που θα λαβάνει από το main_window
-        #Αρχικοποίηση ως frame
-        super().__init__(master, fg_color="transparent")
+        super().__init__(master)
         self.book = book_data
         self.on_save = on_save
 
@@ -22,11 +19,11 @@ class BookDetailsWindow(ctk.CTkFrame):
                      #"authors": "Μ.Καραγάτσης",
                      #"cover_path": None}
         #τα ratings θα έρχονται από το api
-        self.ratings = [
-            {"username": "Giannis", "rating": 5, "comment": "Εξαιρετικό!"},
-            {"username": "Vasilis", "rating": 4, "comment": "Αρκετά καλό"}
-        ]
-        self.create_widgets()
+        #self.ratings = [
+            #{"username": "Giannis", "rating": 5, "comment": "Εξαιρετικό!"},
+            #{"username": "Vasilis", "rating": 4, "comment": "Αρκετά καλό"}
+        #]
+       
 
     def create_widgets(self):
 
@@ -40,8 +37,8 @@ class BookDetailsWindow(ctk.CTkFrame):
         self.label_title=ctk.CTkLabel(self, text=self.book["title"], font=("arial", 18,"bold"))
         self.label_title.grid(row=1, column=0, pady=(10, 15))
 
-        self.label_authors=ctk.CTkLabel(self, text=f"Συγγραφέας:{self.book['author']}", font= ("Arial", 12))
-        self.label_authors.grid(row=2, column=0,pady=5)
+        self.label_authors=tk.Label(self, text=f"Συγγραφέας:{self.book['author']}", font= ("Arial", 12))
+        self.label_authors.pack(pady=5)
 
         print("--- ΔΕΔΟΜΕΝΑ ΠΟΥ ΕΦΤΑΣΑΝ ΣΤΙΣ ΛΕΠΤΟΜΕΡΕΙΕΣ ---")
         print(self.book)
@@ -112,6 +109,18 @@ class BookDetailsWindow(ctk.CTkFrame):
         self.save_button=ctk.CTkButton(self, text="Αποθήκευση", command=self.handle_save, fg_color="#4CAF50", hover_color="#45a049", text_color="white")
         self.save_button.grid(row=9, column =0, pady=15)
 
+        tk.Label(self, text="Η αξιολόγησή σου:", font= ("arial", 12, "bold")).pack(pady=(20,5))
+
+        self.combo_rating=ttk.Combobox(self, values=[1, 2, 3, 4, 5], state="readonly")
+        self.combo_rating.pack(pady=5)
+
+        tk.Label(self, text="Σχόλιο:", font=("arial", 11)).pack(pady=(10,0))
+
+        self.text_comment = tk.Text(self, height=4, width=40)
+        self.text_comment.pack(pady=5, padx=10)
+
+        self.save_button=tk.Button(self, text="Αποθήκευση", command=self.handle_save, bg="#4CAF50", fg="white")
+        self.save_button.pack(pady=15)
         #Φόρτωση σχολίων από Demo Data
         for r in self.ratings:
             display_text = f"⭐ {r['rating']}/5 - {r['username']}: {r['comment']}"
@@ -132,28 +141,21 @@ class BookDetailsWindow(ctk.CTkFrame):
         messagebox.showinfo("Επιτυχία", "Η αξιολόγησή σου αποθηκεύτηκε!")
 
         self.on_save()
-        self.go_back() # Χρησιμοποιούμε τη go_back για να κλείσει το frame
-
-    def go_back(self):
-        print("Επιστροφή στην αρχική οθόνη!")
-        self.destroy() # Καταστρέφει το Frame των λεπτομερειών
-        
-        # ο Controller (master) θα ξαναδείξει το Main Screen
-        self.master.show_main_screen()
+        self.detroy()
+        self.create_widgets()
 
 if __name__ == "__main__":
-    # Μικρό test για να βλέπεις αν τρέχει μόνο του ως Frame
-    root = ctk.CTk()
-    root.geometry("500x800")
+    root = tk.Tk()
+    root.withdraw()
     
     # 1. Φτιάχνουμε ένα ψεύτικο λεξικό για το τεστ
-    test_book = {"id": 1, "title": "Test Book", "author": "Test Author", "cover_url": ""}
+    test_book = {"id": 1, "title": "Test Book", "author": "Test Author"}
     
     # 2. Φτιάχνουμε μια ψεύτικη συνάρτηση για το on_save
     def test_refresh(): print("Refresh callback triggered!")
 
-    # 3. Φορτώνουμε το Frame και το κάνουμε pack στο root
+    # 3. Τα περνάμε στην κλήση
     app = BookDetailsWindow(root, book_data=test_book, on_save=test_refresh)
-    app.pack(fill="both", expand=True)
     
+    app.protocol("WM_DELETE_WINDOW", root.destroy)
     root.mainloop()

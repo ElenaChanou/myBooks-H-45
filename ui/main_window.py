@@ -1,18 +1,12 @@
 from tkinter import ttk
 import tkinter as tk
 from tkinter import messagebox
-from ui.book_details_window import BookDetailsWindow
-import customtkinter as ctk
-from ui.add_book_window import AddBookWindow
-
-
-class MainFrame(ctk.CTkFrame):
-    def __init__(self, parent,controller):
-        super().__init__(parent)
-        self.controller=controller
-        #self.master = master
-        #self.master.title("Βιβλιοθήκη - Κεντρική Οθόνη")
-        #self.master.geometry("800x600")
+from book_details_window import BookDetailsWindow
+class MainWindow:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Βιβλιοθήκη - Κεντρική Οθόνη")
+        self.master.geometry("800x600")
 
         #Μεταφέρω εδώ τα widgets της αναζήτησης γιατί έχω μοιράσει τον υπόλοιπο χώρο στον πίνακα
         #στον πίνακα και το taskbar
@@ -205,21 +199,10 @@ class MainFrame(ctk.CTkFrame):
             book_id = item_data[0]
             print(f"Άνοιγμα λεπτομερειών για το βιβλίο με ID: {book_id}")
             book_to_open = next(b for b in self.books_data if b["id"]==book_id)
-           
-           
-            #ΝΕΟΣ ΚΩΔΙΚΑΣ ΓΙΑ ΕΝΑΛΛΑΓΗ ΣΕΛΙΔΑΣ (FRAME) ---
-            self.pack_forget() # 1. Κρύβουμε το τρέχον παράθυρο (Main Window)
-            
-            #  Φορτώνουμε τις λεπτομέρειες και τις περνάμε στον Controller
-             #Σύνδεση με την class BookDetails
-            self.details_frame = BookDetailsWindow(master=self.controller, book_data=book_to_open, on_save=self.refresh_books_list)
-            self.details_frame.pack(fill="both", expand=True) 
+            #Σύνδεση με την class BookDetails
+            BookDetailsWindow(master=self.master, book_data=book_to_open, on_save=self.refresh_books_list)
 
 
-    def open_add_book(self):
-        AddBookWindow(self)
-        
-    
 
     #Μηχανισμός διαγραφής για να μην φαίνονται διπλά τα βιβλία μετά τη φόρτωση
     def refresh_books_list(self):
@@ -239,16 +222,22 @@ class MainFrame(ctk.CTkFrame):
 
 
 
+
 if __name__ == "__main__":
-    #ψεύτικος manager για να παρακάμπτει τη show_login_screen που βρίσκεται στον manager
-    class DummyController:
-        def show_login_screen(self):
-            print("To κουμπί αποσύνδεσης πατήθηκε!(Test mode)")
     root = tk.Tk()
-    dummy_manager = DummyController()
-    app = MainFrame(root, dummy_manager) #ο ψεύτικος controller στην θέση της παραμέτρου controller που περιμένει η MainFrame
-    app.pack(fill="both", expand=True)
-    root.mainloop()
+    root.withdraw()
+    
+    # 1. Φτιάχνουμε ένα ψεύτικο λεξικό για το τεστ
+    test_book = {"id": 1, "title": "Test Book", "author": "Test Author"}
+    
+    # 2. Φτιάχνουμε μια ψεύτικη συνάρτηση για το on_save
+    def test_refresh(): print("Refresh callback triggered!")
+
+    # 3. Τα περνάμε στην κλήση
+    app = BookDetailsWindow(root, book_data=test_book, on_save=test_refresh)
+    
+    app.protocol("WM_DELETE_WINDOW", root.destroy)
+    root.mainloop()  
 
 
 
