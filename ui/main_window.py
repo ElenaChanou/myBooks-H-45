@@ -11,29 +11,69 @@ class MainWindow:
         #Μεταφέρω εδώ τα widgets της αναζήτησης γιατί έχω μοιράσει τον υπόλοιπο χώρο στον πίνακα
         #στον πίνακα και το taskbar
 
-        self.label_search= tk.Label(self.master, text="Αναζήτηση", font=("Arial", 12, "bold"))
-        self.label_search.pack(pady=5)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        self.search_frame=ctk.CTkFrame(self)
+        self.search_frame.grid(row=0, column=0, pady=10, sticky="ew")
+        self.search_frame.grid_columnconfigure(3, weight=1)
+        ####
+
+        self.label_search= ctk.CTkLabel(self.search_frame, text="Αναζήτηση", font=("Arial", 12, "bold"))
+        self.label_search.grid(row=0, column=0, padx=5)
         
-        self.entry_search= tk.Entry(self.master, font=("Arial", 12))
-        self.entry_search.pack(pady=5)
+        self.entry_search= ctk.CTkEntry(self.search_frame, font=("Arial", 12))
+        self.entry_search.grid(row=0, column=1, padx=5)
         self.entry_search.bind("<Return>", self.handle_search)
 
         
-        self.search_button= tk.Button(self.master, text="Αναζήτηση", command= self.handle_search, font= ("Arial", 12, "italic"))
-        self.search_button.pack(pady=10)
+        self.search_button= ctk.CTkButton(self.search_frame, text="Αναζήτηση", command= self.handle_search, font= ("Arial", 12, "italic"))
+        self.search_button.grid(row=0, column=2, padx=5)
         
-         
+        self.tree_frame = ctk.CTkFrame(self)
+        self.tree_frame.grid(row=1, column=0, sticky="nsew" ,padx=20)
+
+        self.tree_frame.grid_rowconfigure(0, weight=1)
+        self.tree_frame.grid_columnconfigure(0, weight=1)
+
         #Δημιουργία πλειάδας για το σχέδιο του πίνακα με 6 στήλες()
         self.columns = ("id", "title", "author", "year", "avg_rate", "total_rates")
+
+        #Ρύθμιση στυλ dark mode για το πίνακα
+        style=ttk.Style()
+        style.theme_use("default")
+
+        #Xρώματα για το σώμα του πίνακα
+        style.configure("Treeview", background="#2b2b2b", 
+                                    foreground="white",
+                                    rowheight=30,
+                                    fieldbackground="#2b2b2b",
+                                    borderwidth=0)
+        #Χρώμα κατά την επιλογή του βιβλίου
+        style.map('Treeview', background=[('selected', '#1f538d')])
+
+        #Χρώμα για επικεφαλίδα
+        style.configure("Treeview.Heading",
+                        background="#565b5e",
+                        foreground="white",
+                        font=("arial", 11, "bold"),
+                        borderwidth=0)
+        style.map("Treeview.Heading", background=[('active', '#3c3f41')])
+
         #Δημιορυργία Treeview πίνακα
-        self.tree = ttk.Treeview(self.master, columns = self.columns, show="headings")
+        self.tree = ttk.Treeview(self.tree_frame, columns = self.columns, show="headings")
         
         
         #Δημιουργία scrollbar
-        self.scrollbar = ttk.Scrollbar(self.master, orient="vertical", command=self.tree.yview)
+        self.scrollbar = ctk.CTkScrollbar(self.tree_frame, orientation="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=self.scrollbar.set)
-        self.scrollbar.pack(side="right", fill="y")
-        self.tree.pack(side="top", fill="both", expand=True)
+
+        #Τοποθετώ τον πίνακα και τη μπάρα στο tree_frame
+        self.tree.grid(row=0,column=0,sticky="nsew")
+        self.scrollbar.grid(row=0,column=1,sticky="ns")
+
+       # self.scrollbar.pack(side="right", fill="y")
+        #self.tree.pack(side="top", fill="both", expand=True)
 
 
         #Δημιοργία τίτλων πρώτης σειράς στηλών
@@ -47,29 +87,45 @@ class MainWindow:
 
         #Ρύθμιση πλάτους στηλών με τη μέθοδο column
         self.tree.column("id", width=30, anchor="center")
-        self.tree.column("title", width=200, anchor="w")
-        self.tree.column("author", width=150, anchor="w")
-        self.tree.column("year", width=60, anchor="center")
-        self.tree.column("avg_rate", width=50, anchor="center")
-        self.tree.column("total_rates", width=80, anchor="center")
+        self.tree.column("title", width=220, anchor="center")
+        self.tree.column("author", width=180, anchor="center")
+        self.tree.column("year", width=100, anchor="center")
+        self.tree.column("avg_rate", width=200, anchor="center")
+        self.tree.column("total_rates", width=100, anchor="center")
 
 
-        #Δημιουργία frame κάτω για αναζήτηση online --ΠΕΔΙΟ ΚΟΥΜΠΙΩΝ--
-        self.footer_frame = tk.Frame(self.master)
-        self.footer_frame.pack(pady=20)
+        # Δημιουργία frame κάτω για αναζήτηση online --ΠΕΔΙΟ ΚΟΥΜΠΙΩΝ--
+        self.footer_frame = ctk.CTkFrame(self, fg_color="transparent") 
+        self.footer_frame.grid(row=2, column=0, pady=20, sticky="ew") 
+        
+        # Λέμε στις 4 στήλες των κουμπιών να μοιραστούν τον χώρο ίσα (weight=1)
+        self.footer_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
+
+        
 
         #Add book. Αργότερα θα φτιαχτεί μια νέα συνάρτηση που θα ανοίγει τη φόρμα προσθήκης και θα καλείται με το κουμπί addBook
-        self.addΒook_button =tk.Button (self.footer_frame, text = "Προσθήκη Βιβλίου", command=self.online_search, font = ("Arial" , 10, "italic") )
-        self.addΒook_button.pack(side="left", padx=10)
+        #Μέσα στο footer βάζω τα κουμπιά στη σειρά (στηλες 0,1,2,3)
+
+        self.addBook_button =ctk.CTkButton (self.footer_frame, text = "Προσθήκη Βιβλίου", command=self.open_add_book, font = ("Arial" , 10, "italic") )
+        self.addBook_button.grid(row=0,column=0, padx=10, pady=20)
+
         #placeholder προς το παρόν. θα μπει command που θα παίρνει τα δημοφιλή από μέθοδο βάσης
-        self.popularBook_button =tk.Button(self.footer_frame, text = "Δημοφιλή", font = ("Arial" , 10, "italic"), command=lambda: print("Δημοφιλή βιβλία κουμπί"))
-        self.popularBook_button.pack(side="left", padx=10)
+        self.popularBook_button =ctk.CTkButton(self.footer_frame, text = "Δημοφιλή", font = ("Arial" , 10, "italic"), command=lambda: print("Δημοφιλή βιβλία κουμπί"))
+        self.popularBook_button.grid(row=0,column=1,padx=10, pady=10)
+
         #placeholder προς το παρόν. θα μπει command που θα παίρνει τα αδιάβαστα από μέθοδο βάσης
-        self.unreadBook_button =tk.Button(self.footer_frame, text = "Δημοφιλή αδιάβαστα", font = ("Arial" , 10, "italic"), command=lambda: print("Δημοφιλή αδιάβαστα κουμπί"))
-        self.unreadBook_button.pack(side="left", padx=10)
+        self.unreadBook_button =ctk.CTkButton(self.footer_frame, text = "Δημοφιλή αδιάβαστα", font = ("Arial" , 10, "italic"), command=lambda: print("Δημοφιλή αδιάβαστα κουμπί"))
+        self.unreadBook_button.grid(row=0,column=2,padx =10,pady=10)
+
         #καλεί τη μέθοδο open_details, η οποία θα παίρνει το ID και θα εμφανίζει τις λεπτομέρειες από τη βάση
-        self.bookDetails_button=tk.Button(self.footer_frame, text ="Λεπτομέρειες", command=self.open_details, font = ("Arial" , 10, "italic") )
-        self.bookDetails_button.pack(side="left", padx=10)
+        self.bookDetails_button=ctk.CTkButton(self.footer_frame, text ="Λεπτομέρειες", command=self.open_details, font = ("Arial" , 10, "italic"), fg_color = "#28a745", hover_color="#218838")
+        self.bookDetails_button.grid(row=0,column=3,padx =10,pady=10)
+
+        self.logout_button = ctk.CTkButton(self.search_frame, text="Αποσύνδεση", command=self.controller.show_login_screen)
+        self.logout_button.grid(row=0, column=5,padx=10, pady=10)
+
+        self.welcome_label=ctk.CTkLabel(self.search_frame, text= "Καλώς ήρθες!", font=("Arial", 12), text_color="gray" )
+        self.welcome_label.grid(row=0, column=4, padx=10,pady=10)
 
 
         #Δοκιμαστικά δεδομένα σε λεξικά μέσα σε λίστα. θα αντικατασταθούν με τα δεδομένα της βάσης
@@ -77,7 +133,7 @@ class MainWindow:
                           {"id": 1, "title": "Όπλα, μικρόβια και ατσάλι", "author": "Jared Diamond", "year": "1997", "avg_rate": "4.6", "total_rates": "2000"},
                           {"id": 2, "title": "Big Bang", "author": "Simon Singh", "year": "2005", "avg_rate": "4.6", "total_rates": "1500"},
                           {"id": 3, "title": "Στα μυστικά του Βάλτου", "author": "Πηνελόπη Δέλτα", "year": "1937", "avg_rate": "4.8", "total_rates": "10000"},
-                          {"id": 4, "title": "Ένα παιδί μετράει τ΄ άστρα", "author": "Μενέλαος Λουντέμης", "year": "1956", "avg_rate": "4.8", "total_rates": "7000"},
+                          {"id": 4, "title": "Ένα παιδί μετράει τ΄ άστρα", "author": "Μενέλαος Λουντέμης", "year": "1956", "avg_rate": "4.8", "total_rates": "7000", "cover_url": "https://covers.openlibrary.org/b/id/8225261-L.jpg"},
                           {"id": 5, "title": "Ο καπετάν Μιχάλης", "author": "Νίκος Καζαντζάκης", "year": "1953", "avg_rate": "4.9", "total_rates": "9200"},
                           {"id": 6, "title": "Η μεγάλη χίμαιρα", "author": "Μ.Καραγάτσης", "year": "1936", "avg_rate": "4.6", "total_rates": "6850"}
                         ]
@@ -147,9 +203,6 @@ class MainWindow:
             BookDetailsWindow(master=self.master, book_data=book_to_open, on_save=self.refresh_books_list)
 
 
-    #Συνάρτηση προσθήκης βιβλίου από το διαδίκτυο. Προς το παρόν δοκιμαστικά ένα print.
-    def online_search(self):
-        print(" Άνοιγμα παραθύρου online αναζήτησης")
 
     #Μηχανισμός διαγραφής για να μην φαίνονται διπλά τα βιβλία μετά τη φόρτωση
     def refresh_books_list(self):
