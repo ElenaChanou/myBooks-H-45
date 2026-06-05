@@ -63,8 +63,10 @@ def unread_popular_books(user_id, limit=10):
     # Support databases that may or may not implement get_ratings_by_user.
     # Use getattr to avoid static attribute access errors and provide a
     # safe fallback that returns an empty list.
-    user_ratings = getattr(db, "get_ratings_by_user", lambda uid: [])(user_id)
+    #Αλλαγή για να συμφωνεί με τηυ βάση user_ratings = getattr(db, "get_ratings_by_user", lambda uid: [])(user_id)
+    user_ratings = getattr(db, "get_user_ratings", lambda uid: [])(user_id)
 
+   
     # Normalize rating entries to extract book ids robustly.
     rated_ids = set()
     for r in user_ratings:

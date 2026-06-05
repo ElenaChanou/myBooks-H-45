@@ -4,6 +4,8 @@ from tkinter import messagebox
 from ui.book_details_window import BookDetailsWindow
 import customtkinter as ctk
 from ui.add_book_window import AddBookWindow
+from services.book_service import list_all_books, get_book_details
+from services.book_service import popular_books, unread_popular_books
 
 
 class MainFrame(ctk.CTkFrame):
@@ -116,11 +118,11 @@ class MainFrame(ctk.CTkFrame):
         self.addBook_button.grid(row=0,column=0, padx=10, pady=20)
 
         #placeholder προς το παρόν. θα μπει command που θα παίρνει τα δημοφιλή από μέθοδο βάσης
-        self.popularBook_button =ctk.CTkButton(self.footer_frame, text = "Δημοφιλή", font = ("Arial" , 10, "italic"), command=lambda: print("Δημοφιλή βιβλία κουμπί"))
+        self.popularBook_button =ctk.CTkButton(self.footer_frame, text = "Δημοφιλή", font = ("Arial" , 10, "italic"), command= self.handle_popular)
         self.popularBook_button.grid(row=0,column=1,padx=10, pady=10)
 
         #placeholder προς το παρόν. θα μπει command που θα παίρνει τα αδιάβαστα από μέθοδο βάσης
-        self.unreadBook_button =ctk.CTkButton(self.footer_frame, text = "Δημοφιλή αδιάβαστα", font = ("Arial" , 10, "italic"), command=lambda: print("Δημοφιλή αδιάβαστα κουμπί"))
+        self.unreadBook_button =ctk.CTkButton(self.footer_frame, text = "Δημοφιλή αδιάβαστα", font = ("Arial" , 10, "italic"), command= self.handle_popular_unread)
         self.unreadBook_button.grid(row=0,column=2,padx =10,pady=10)
 
         #καλεί τη μέθοδο open_details, η οποία θα παίρνει το ID και θα εμφανίζει τις λεπτομέρειες από τη βάση
@@ -135,18 +137,21 @@ class MainFrame(ctk.CTkFrame):
 
 
         #Δοκιμαστικά δεδομένα σε λεξικά μέσα σε λίστα. θα αντικατασταθούν με τα δεδομένα της βάσης
-        self.books_data = [
-                          {"id": 1, "title": "Όπλα, μικρόβια και ατσάλι", "author": "Jared Diamond", "year": "1997", "avg_rate": "4.6", "total_rates": "2000"},
-                          {"id": 2, "title": "Big Bang", "author": "Simon Singh", "year": "2005", "avg_rate": "4.6", "total_rates": "1500"},
-                          {"id": 3, "title": "Στα μυστικά του Βάλτου", "author": "Πηνελόπη Δέλτα", "year": "1937", "avg_rate": "4.8", "total_rates": "10000"},
-                          {"id": 4, "title": "Ένα παιδί μετράει τ΄ άστρα", "author": "Μενέλαος Λουντέμης", "year": "1956", "avg_rate": "4.8", "total_rates": "7000", "cover_url": "https://covers.openlibrary.org/b/id/8225261-L.jpg"},
-                          {"id": 5, "title": "Ο καπετάν Μιχάλης", "author": "Νίκος Καζαντζάκης", "year": "1953", "avg_rate": "4.9", "total_rates": "9200"},
-                          {"id": 6, "title": "Η μεγάλη χίμαιρα", "author": "Μ.Καραγάτσης", "year": "1936", "avg_rate": "4.6", "total_rates": "6850"}
-                        ]
-        #εδώ θα γίνει η σύνδεση με τη συνάρτηση της βάσης
-        self.update_table(self.books_data)
+        #self.books_data = [
+                          #{"id": 1, "title": "Όπλα, μικρόβια και ατσάλι", "author": "Jared Diamond", "year": "1997", "avg_rate": "4.6", "total_rates": "2000"},
+                          #{"id": 2, "title": "Big Bang", "author": "Simon Singh", "year": "2005", "avg_rate": "4.6", "total_rates": "1500"},
+                          #{"id": 3, "title": "Στα μυστικά του Βάλτου", "author": "Πηνελόπη Δέλτα", "year": "1937", "avg_rate": "4.8", "total_rates": "10000"},
+                          #{"id": 4, "title": "Ένα παιδί μετράει τ΄ άστρα", "author": "Μενέλαος Λουντέμης", "year": "1956", "avg_rate": "4.8", "total_rates": "7000", "cover_url": "https://covers.openlibrary.org/b/id/8225261-L.jpg"},
+                          #{"id": 5, "title": "Ο καπετάν Μιχάλης", "author": "Νίκος Καζαντζάκης", "year": "1953", "avg_rate": "4.9", "total_rates": "9200"},
+                          #{"id": 6, "title": "Η μεγάλη χίμαιρα", "author": "Μ.Καραγάτσης", "year": "1936", "avg_rate": "4.6", "total_rates": "6850"}
+                        #]
+
+        books_data=[]
+        # Καλούμε τη συνάρτηση για να γεμίσει ο πίνακας με το που ανοίγει η εφαρμογή
+        self.refresh_books_list()
         self.tree.bind("<<TreeviewSelect>>", self.on_item_selected)
-        
+        self.selected_book_id = None
+    
     def update_table(self,data):
 
         #Καθαρισμός υπαρχόντων αντικειμένων
@@ -157,21 +162,35 @@ class MainFrame(ctk.CTkFrame):
         #Γέμισμα για κάθε λεξικό με την προσωρινή παράμετρο data που παίρνει τη λίστα self.books_data
         #Η self.books.data περνάει ως data και στο for παίρνει το κάθε λεξικό και περνάει στη μεταβλητή book
         #Με το end εισαγωγουμε στο τέλος το νέο βιβλίο
+        #for book in data:
+         #   self.tree.insert("", "end", values=(
+          #      book["id"],
+           #     book["title"],
+            #    book["author"],
+             ##  book["avg_rate"],
+               # book["total_rates"]
+            #))
+        
+
+        #Αλλαγή τρόπου εισαγωγής με get() ώστε να μην κρασάρει αν λείπουν δεδομενα
+
         for book in data:
             self.tree.insert("", "end", values=(
-                book["id"],
-                book["title"],
-                book["author"],
-                book["year"],
-                book["avg_rate"],
-                book["total_rates"]
+                book.get("book_id", book.get("id", "")), # Ψάχνει είτε book_id είτε id
+                book.get("title", "Άγνωστος Τίτλος"),
+                book.get("authors", book.get("author", "")), # Ψάχνει είτε authors είτε author
+                book.get("year", ""),
+                book.get("avg_rate", 0),
+                book.get("total_rates", 0)
             ))
     
     def on_item_selected(self, event):
         selected_item = self.tree.selection()
         if selected_item:
             item_data = self.tree.item(selected_item)['values']
-            print(f"Επιλέχθηκε: {item_data}")
+            #Αποθηκεύουμε το ID ΤΟΥ ΕΠΙΛΕΓΜΈΝΟΥ ΒΙΒΛΙΟΥ ΓΙΑ ΧΡΗΣΗ ΑΡΓΟΤΕΡΑ
+            self.selected_book_id = item_data[0]
+            print(f"Επιλέχθηκε το βιβλίο με ID: {self.selected_book_id }")
 
     def handle_search(self, event=None):
         #μετατρέπουμε το κείμενο από το entry σε μικρά με το lower()
@@ -194,6 +213,24 @@ class MainFrame(ctk.CTkFrame):
                 filtered_books.append(book)#Λίστα αποτελεσμάτων αν ικανοποιείται το if
 
         self.update_table(filtered_books)#κλήση της update_table με τα φιλτραρισμένα βιβλία
+   
+    def handle_popular(self):
+        # Φέρνει τα 10 κορυφαία βιβλία. Παίρνουμε τα δεδομένα από το service
+        books = popular_books(limit=10)
+        
+        # Εδώ καλεί τη συνάρτηση που  έχω για να γεμίζω τον πίνακα (Treeview), Τα στέλνουμε στη συνάρτηση
+        self.update_table(books) 
+
+    def handle_popular_unread(self):
+        # Παίρνουμε το ID του συνδεδεμένου χρήστη από τον εγκέφαλο (controller). ποιος ειναι μεσα
+        user_id = self.controller.current_user.get('id')
+        
+        # Φέρνει τα 10 κορυφαία που δεν έχει διαβάσει ο συγκεκριμένος χρήστης
+        books = unread_popular_books(user_id, limit=10)
+        
+        #Τα στέλνουμε στηn συναρτηση
+        self.update_table(books)
+
 
     def open_details(self):
         selected_item = self.tree.selection() #με τη μέθοδο seelectio() ρωτάμε ποιο στοιχείο επέλεξε ο χρήστης
@@ -204,7 +241,8 @@ class MainFrame(ctk.CTkFrame):
             item_data = self.tree.item(selected_item)['values']
             book_id = item_data[0]
             print(f"Άνοιγμα λεπτομερειών για το βιβλίο με ID: {book_id}")
-            book_to_open = next(b for b in self.books_data if b["id"]==book_id)
+            # Φέρνουμε τα πραγματικά δεδομένα από τη βάση
+            book_to_open = get_book_details(book_id)
            
            
             #ΝΕΟΣ ΚΩΔΙΚΑΣ ΓΙΑ ΕΝΑΛΛΑΓΗ ΣΕΛΙΔΑΣ (FRAME) ---
@@ -217,7 +255,7 @@ class MainFrame(ctk.CTkFrame):
 
 
     def open_add_book(self):
-        AddBookWindow(self)
+        AddBookWindow(self, on_add_success=self.refresh_books_list)
         
     
 
@@ -225,9 +263,10 @@ class MainFrame(ctk.CTkFrame):
     def refresh_books_list(self):
         for item in self.tree.get_children():
             self.tree.delete(item)
-    #ξαναγεμίζουμε τον πίνακα από τη λίστα self.books_data προς το παρόν
-        for book in self.books_data:
-            self.tree.insert("","end", values=(book["id"], book.get("title",""), book.get("author",""), book.get("year",""), book.get("avg_rate", 0), book.get("total_rates",0)))
+        #Καλούμε τη βάση για να πάρομε τα βιβλία
+        books_data=list_all_books()
+        for book in books_data:
+            self.tree.insert("","end", values=(book.get("book_id",""), book.get("title",""), book.get("author",""), book.get("year",""), book.get("avg_rate", 0), book.get("total_rates",0)))
         print("Ο πίνακας καθαρίστηκε και ενημερώθηκε")
 
 
@@ -239,16 +278,22 @@ class MainFrame(ctk.CTkFrame):
 
 
 
+
 if __name__ == "__main__":
-    #ψεύτικος manager για να παρακάμπτει τη show_login_screen που βρίσκεται στον manager
-    class DummyController:
-        def show_login_screen(self):
-            print("To κουμπί αποσύνδεσης πατήθηκε!(Test mode)")
     root = tk.Tk()
-    dummy_manager = DummyController()
-    app = MainFrame(root, dummy_manager) #ο ψεύτικος controller στην θέση της παραμέτρου controller που περιμένει η MainFrame
-    app.pack(fill="both", expand=True)
-    root.mainloop()
+    root.withdraw()
+    
+    # 1. Φτιάχνουμε ένα ψεύτικο λεξικό για το τεστ
+    test_book = {"id": 1, "title": "Test Book", "author": "Test Author"}
+    
+    # 2. Φτιάχνουμε μια ψεύτικη συνάρτηση για το on_save
+    def test_refresh(): print("Refresh callback triggered!")
+
+    # 3. Τα περνάμε στην κλήση
+    app = BookDetailsWindow(root, book_data=test_book, on_save=test_refresh)
+    
+    app.protocol("WM_DELETE_WINDOW", root.destroy)
+    root.mainloop()  
 
 
 
