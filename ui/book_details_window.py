@@ -3,12 +3,20 @@ from tkinter import ttk
 from PIL import Image,ImageTk
 import os
 from tkinter import messagebox
+import customtkinter as ctk
+from services.rating_service import save_rating
 
 
-class BookDetailsWindow(tk.Toplevel):
+
+#Σύμφωνα με το book_service και τη συνάρτηση unread_popular_books, θεωρείται διαβασμένο το βιβλίο 
+#μόνο αν έχει προστεθεί κριτική.
+
+class BookDetailsWindow(ctk.CTkFrame):
     def __init__(self,master, book_data, on_save):#αλλαγή στο μέλλον θα μπει μια παράμετρος book_data που θα λαβάνει από το main_window
-        super().__init__(master)
-        self.book = book_data
+        #Αρχικοποίηση ως frame
+        super().__init__(master, fg_color="transparent")
+        self.book = book_data.get("book", {})
+        self.ratings = book_data.get("ratings", [])
         self.on_save = on_save
 
        
@@ -20,10 +28,10 @@ class BookDetailsWindow(tk.Toplevel):
                      #"cover_path": None}
         #τα ratings θα έρχονται από το api
         #self.ratings = [
-            #{"username": "Giannis", "rating": 5, "comment": "Εξαιρετικό!"},
-            #{"username": "Vasilis", "rating": 4, "comment": "Αρκετά καλό"}
+         #   {"username": "Giannis", "rating": 5, "comment": "Εξαιρετικό!"},
+          #  {"username": "Vasilis", "rating": 4, "comment": "Αρκετά καλό"}
         #]
-       
+        self.create_widgets()
 
     def create_widgets(self):
 
@@ -37,8 +45,8 @@ class BookDetailsWindow(tk.Toplevel):
         self.label_title=ctk.CTkLabel(self, text=self.book["title"], font=("arial", 18,"bold"))
         self.label_title.grid(row=1, column=0, pady=(10, 15))
 
-        self.label_authors=tk.Label(self, text=f"Συγγραφέας:{self.book['author']}", font= ("Arial", 12))
-        self.label_authors.pack(pady=5)
+        self.label_authors=ctk.CTkLabel(self, text=f"Συγγραφέας:{self.book.get('authors', 'Άγνωστος')}", font= ("Arial", 12))
+        self.label_authors.grid(row=2, column=0,pady=5)
 
         print("--- ΔΕΔΟΜΕΝΑ ΠΟΥ ΕΦΤΑΣΑΝ ΣΤΙΣ ΛΕΠΤΟΜΕΡΕΙΕΣ ---")
         print(self.book)
@@ -111,7 +119,7 @@ class BookDetailsWindow(tk.Toplevel):
 
         tk.Label(self, text="Η αξιολόγησή σου:", font= ("arial", 12, "bold")).pack(pady=(20,5))
 
-        self.combo_rating=ttk.Combobox(self, values=[1, 2, 3, 4, 5], state="readonly")
+        self.combo_rating=ttk.Combobox(self, values=["1", "2", "3", "4", "5"], state="readonly")
         self.combo_rating.pack(pady=5)
 
         tk.Label(self, text="Σχόλιο:", font=("arial", 11)).pack(pady=(10,0))
@@ -123,7 +131,7 @@ class BookDetailsWindow(tk.Toplevel):
         self.save_button.pack(pady=15)
         #Φόρτωση σχολίων από Demo Data
         for r in self.ratings:
-            display_text = f"⭐ {r['rating']}/5 - {r['username']}: {r['comment']}"
+            display_text = f"⭐ {r.get('rating',0)}/5 - {r.get('username', 'Άγνωστος')}: {r.get('comment', '')}"
             self.tree_comments.insert("", "end", values=(display_text,))
 
     def handle_save(self):
@@ -137,12 +145,41 @@ class BookDetailsWindow(tk.Toplevel):
         if not rating:
             messagebox.showwarning("Προσοχή","Παρακαλώ επιλέξτε βαθμολογία!")
             return
-        print(f"Αποθήκευση: rating={rating}, comment={comment}")
-        messagebox.showinfo("Επιτυχία", "Η αξιολόγησή σου αποθηκεύτηκε!")
+        # Παίρνουμε το ID του βιβλίου από τα δεδομένα
+        book_id = self.book.get('book_id')
+        
+       # Παίρνουμε το αληθινό ID του συνδεδεμένου χρήστη από τον controller
+        user_id = self.master.current_user.get('id') 
+        
+        try:
+            # Καλούμε την πραγματική συνάρτηση της βάσης
+            save_rating(user_id, book_id, int(rating), comment)
+            
+            messagebox.showinfo("Επιτυχία", "Η αξιολόγησή σου αποθηκεύτηκε!")
+            print(f"Αποθηκεύτηκε πραγματικά στη βάση: rating={rating}, comment={comment}")
+            
+            # Αδειάζουμε το κουτάκι του κειμένου (UX)
+            self.text_comment.delete("1.0", tk.END)
+            
+            # Ενημερώνουμε τον κεντρικό πίνακα στο παρασκήνιο
+            if self.on_save:
+                self.on_save()
+
+        except Exception as e:
+            messagebox.showerror("Σφάλμα", f"Δεν μπόρεσε να αποθηκευτεί: {e}")
+       
 
         self.on_save()
-        self.detroy()
-        self.create_widgets()
+        #self.go_back() # Χρησιμοποιούμε τη go_back για να κλείσει το frame
+    
+   
+
+    def go_back(self):
+        print("Επιστροφή στην αρχική οθόνη!")
+        self.destroy() # Καταστρέφει το Frame των λεπτομερειών
+        
+        # ο Controller (master) θα ξαναδείξει το Main Screen
+        self.master.show_main_screen()
 
 if __name__ == "__main__":
     root = tk.Tk()

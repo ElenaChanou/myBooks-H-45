@@ -14,16 +14,16 @@ class Database_Manager:
         '''Ανοίγει και επιστρέφει μια νέα σύνδεση με τη βάση δεδομένων.
            Ενεργοποιεί αυτόματα την υποστήριξη γιά Foreign Keys.
         '''
-        
         connection = sqlite3.connect(f"{self.db_name}.db")
         connection.execute("PRAGMA foreign_keys = ON")
         return connection
 
     # Δημιουργία των πινάκων USERS, BOOKS και RATINGS αν δεν υπάρχουν ήδη
     def execute_schema(self)-> None:
-       connection = self.create_connection()
+       
        # Χρήση try-except-finally για να διαχειριστούμε τυχόν σφάλματα και να εξασφαλίσουμε ότι η σύνδεση θα κλείνει κανονικα.
        try:
+           connection = self.create_connection()
            with connection:
                 cursor = connection.cursor()
                 # ΔΗΜΙΟΥΡΓΙΑ ΠΙΝΑΚΑ ΧΡΗΣΤΩΝ USERS
@@ -63,7 +63,9 @@ class Database_Manager:
             print(f"ΣΦΑΛΜΑ ΚΑΤΑ ΤΗΝ ΔΗΜΙΟΥΡΓΙΑ ΤΩΝ ΠΙΝΑΚΩΝ: {fail}")
        finally:
             # Κλέινουμε κάθε φορά τη σύνδεση για να μην έχουμε προβλήματα με κλειδώματα ή διαρροές πόρων.
-            connection.close()
+            # Αν η σύνδεση δεν δημιουργήθηκε επιτυχώς, το connection θα είναι None και δεν θα προσπαθήσουμε να την κλείσουμε.
+            if connection:
+                connection.close()
 
     # Θέλουμε όλες τις CRUD λειτουργίες (CREATE, READ, UPDATE, DELETE) για χρήστες, βιβλία και αξιολογήσεις.
     # CREATE(user_registration, add_book):
@@ -77,23 +79,23 @@ class Database_Manager:
                 cursor = connection.cursor()
                 new_user_insert = "INSERT INTO USERS (username, password) VALUES (?, ?)"
                 cursor.execute(new_user_insert,(username, hashed_password))
-                connection.commit()
                 return True
         except Exception as fail:
             print(f"ΣΦΑΛΜΑ ΚΑΤΑ ΤΗΝ ΕΓΓΡΑΦΗ ΤΟΥ ΧΡΗΣΤΗ: {fail}")
             return False
         finally:
-            connection.close()  
+            if connection:
+                connection.close()  
 
     def add_book(self, book_dict: dict) -> int | None:
-
-        connection = self.create_connection()
         
         title = book_dict.get('title')
         authors = book_dict.get('authors')
 
         if not title or not authors:
             return None
+        
+        connection = self.create_connection()
         
         year = book_dict.get('year', 'Άγνωστη Ημερομηνία')
         isbn = book_dict.get('isbn', None)
@@ -103,33 +105,33 @@ class Database_Manager:
         try:
             with connection:
                 cursor = connection.cursor()
-                try:
-                 # 1. ΠΡΩΤΟΣ ΕΛΕΓΧΟΣ: Αν υπάρχει ήδη το volume_id από το API
-                    if volume_id:
-                        cursor.execute("SELECT book_id FROM BOOKS WHERE volume_id = ?", (volume_id,))
-                        book_exists = cursor.fetchone()
-                        if book_exists:
-                            print(f"ΤΟ ΒΙΒΛΙΟ ΥΠΑΡΧΕΙ ΗΔΗ (volume_id: {volume_id})")
-                            return book_exists[0]
 
-                    # 2. ΔΕΥΤΕΡΟΣ ΕΛΕΓΧΟΣ: Fallback με βάση τίτλο και συγγραφέα
-                    cursor.execute("SELECT book_id FROM BOOKS WHERE title = ? and authors = ?",(title, authors))
+                # 1. ΠΡΩΤΟΣ ΕΛΕΓΧΟΣ: Αν υπάρχει ήδη το volume_id από το API
+                if volume_id:
+                    cursor.execute("SELECT book_id FROM BOOKS WHERE volume_id = ?", (volume_id,))
                     book_exists = cursor.fetchone()
                     if book_exists:
-                        print("ΤΟ ΒΙΒΛΙΟ ΕΧΕΙ ΗΔΗ ΚΑΤΑΧΩΡΗΘΕΙ ΣΤΗΝ ΒΑΣΗ")
+                        print(f"ΤΟ ΒΙΒΛΙΟ ΥΠΑΡΧΕΙ ΗΔΗ (volume_id: {volume_id})")
                         return book_exists[0]
-                
-                    # 3. ΕΙΣΑΓΩΓΗ: Αν δεν βρέθηκε τίποτα από τα παραπάνω
-                    insert_query = "INSERT INTO BOOKS(title, authors, year, isbn, description, cover_img, volume_id) VALUES(?, ?, ?, ?, ?, ?, ?)"
-                    cursor.execute(insert_query,(title, authors, year, isbn, description, cover_img, volume_id))
 
-                    connection.commit()
-                    return cursor.lastrowid
-                except Exception as fail:
-                    print(f"ΑΠΟΤΥΧΙΑ ΕΙΣΑΓΩΓΗΣ: {fail}")
-                    return None
+                # 2. ΔΕΥΤΕΡΟΣ ΕΛΕΓΧΟΣ: Fallback με βάση τίτλο και συγγραφέα
+                cursor.execute("SELECT book_id FROM BOOKS WHERE title = ? and authors = ?",(title, authors))
+                book_exists = cursor.fetchone()
+                if book_exists:
+                    print("ΤΟ ΒΙΒΛΙΟ ΕΧΕΙ ΗΔΗ ΚΑΤΑΧΩΡΗΘΕΙ ΣΤΗΝ ΒΑΣΗ")
+                    return book_exists[0]
+                
+                # 3. ΕΙΣΑΓΩΓΗ: Αν δεν βρέθηκε τίποτα από τα παραπάνω
+                insert_query = "INSERT INTO BOOKS(title, authors, year, isbn, description, cover_img, volume_id) VALUES(?, ?, ?, ?, ?, ?, ?)"
+                cursor.execute(insert_query,(title, authors, year, isbn, description, cover_img, volume_id))
+                return cursor.lastrowid
+            
+        except Exception as fail:
+            print(f"ΑΠΟΤΥΧΙΑ ΕΙΣΑΓΩΓΗΣ: {fail}")
+            return None
         finally:
-            connection.close()
+            if connection:
+                connection.close()
 
     # READ(find_user, get_book, search_books, get_all_books_with_stats, get_ratings):
     def find_user(self,username:str, password:str)-> int | None:
@@ -150,7 +152,8 @@ class Database_Manager:
             else:
                 return None
         finally:
-            connection.close()
+            if connection:
+                connection.close()
 
     def get_book(self, book_id: int) -> dict | None:
         '''Η συνάρτηση επιστρέφει ενα λεξικό με τα αποθηκευμένα στοιχεία γιά το βιβλίο, διαφορετικά επιστρέφει None'''
@@ -172,7 +175,8 @@ class Database_Manager:
                     print(f"ΣΦΑΛΜΑ ΚΑΤΑ ΤΗΝ ΑΝΑΚΤΗΣΗ: {fail}")
                     return None
         finally:
-            connection.close()
+            if connection:
+                connection.close()
     
     def get_ratings(self, book_id: int)-> list[dict]:
         '''Η συνάρτηση επιστρέφει μία λίστα από λεξικά με τις αξιολογήσεις ενός βιβλίου, διαφορετικά επιστρέφει μία κενή λίστα.'''
@@ -197,7 +201,8 @@ class Database_Manager:
                     print(f"ΑΠΟΤΥΧΙΑ ΑΝΑΚΤΗΣΗΣ : {fail}")
                     return []
         finally:
-            connection.close()
+            if connection:
+                connection.close()
 
 
     def get_user_ratings(self, user_id: int)-> list[dict]:
@@ -215,7 +220,8 @@ class Database_Manager:
                     print(f"ΑΠΟΤΥΧΙΑ ΑΝΑΚΤΗΣΗΣ ΑΞΙΟΛΟΓΗΣΕΩΝ ΧΡΗΣΤΗ: {fail}")
                     return []
         finally:
-            connection.close()
+            if connection:
+                connection.close()
 
 
     def search_books(self, query: str)-> list[dict]:
@@ -251,7 +257,8 @@ class Database_Manager:
                     print(f"Σφάλμα κατά την αναζήτηση: {fail}")
                 return []
         finally:
-            connection.close()
+            if connection:
+                connection.close()
 
     def get_all_books_with_stats(self)-> list[dict]:
         '''Η ΣΥΝΑΡΤΗΣΗ ΜΑΣ ΕΠΙΣΤΡΕΦΕΙ ΤΟ ΣΥΝΟΛΟ ΤΩΝ ΒΙΒΛΙΩΝ ΜΕ ΤΟΝ ΜΕΣΟ ΟΡΟ ΤΩΝ ΑΞΙΟΛΟΓΗΣΕΩΝ
@@ -263,6 +270,7 @@ class Database_Manager:
                 connection.row_factory = sqlite3.Row
                 cursor = connection.cursor()
                 try:
+                # Χρησιμοποιούμε LEFT JOIN για να συμπεριλάβουμε και τα βιβλία που δεν έχουν αξιολογήσεις.
                     books_stats_query = '''
                     SELECT BOOKS.*, 
                     ROUND(AVG(RATINGS.rating), 2) AS avg_rate,
@@ -273,17 +281,14 @@ class Database_Manager:
                 
                     cursor.execute(books_stats_query)
                     rows = cursor.fetchall()
-                    all_book_stats = [] # ΑΡΧΙΚΟΠΟΙΗΣ ΛΙΣΤΑΣ
 
-                    for row in rows:
-                        all_book_stats.append(dict(row))
-                    return all_book_stats
-                
+                    return [dict(row) for row in rows]
                 except Exception as fail:
                     print(f"ΣΦΑΛΜΑ ΕΥΡΕΣΗΣ ΣΤΑΤΙΣΤΙΚΩΝ: {fail}")
                     return []
         finally:
-            connection.close()
+            if connection:
+                connection.close()
 
     def get_read_books(self, user_id : int) -> list[dict]:
         '''Η συνάρτηση επιστρέφει μία λίστα από λεξικά με τα βιβλία που έχει αξιολογήσει ένας χρήστης, 
@@ -311,6 +316,7 @@ class Database_Manager:
                 print(f"Σφάλμα: {fail}")
                 return []
         finally:
+            if connection:  
                 connection.close()
     
     def get_unread_books(self, user_id: int)-> list[dict]:
@@ -331,18 +337,20 @@ class Database_Manager:
             print(f"ΣΦΑΛΜΑ: {fail}")
             return []
         finally:
-            connection.close()
+            if connection:
+                connection.close()
     
     # UPDATE (Upsert):
     def upsert_rating(self, user_id: int, book_id: int, rating: int, comments: str)-> bool:
         ''' Η συνάρτηση αυτή κάνει upsert (update ή insert) μίας αξιολόγησης. 
         Άν υπάρχει ήδη αξιολόγηση γιά το συγκεκριμένο user_id και book_id, τότε ενημερώνει την υπάρχουσα εγγραφή.
         Άν δεν υπάρχει, δημιουργεί μία νέα εγγραφή.'''
-
-        connection = self.create_connection()  
         if rating < 1 or rating > 5:
             print("ΕΙΣΑΓΕΤΑΙ ΤΙΜΗ ΑΠΟ 1-5.")
             return False
+        
+        connection = self.create_connection()
+
         try:
             with connection:
                 cursor = connection.cursor()
@@ -365,13 +373,16 @@ class Database_Manager:
                         VALUES (?,?,?,?)'''
                         cursor.execute(insert_query,(user_id, book_id, rating, comments))
 
-                    connection.commit()
                     return True
                 except sqlite3.IntegrityError as Error:
                     print(f"ΠΡΟΕΚΥΨΕ ΣΦΑΛΜΑ ΑΚΕΡΑΙΟΤΗΤΑΣ: {Error}")
-                return False
+                    return False
+        except Exception as fail:
+            print(f"ΠΡΟΕΚΥΨΕ ΣΦΑΛΜΑ: {fail}")
+            return False
         finally:
-            connection.close()
+            if connection:
+                connection.close()
 
     # DELETE:
     def delete_book(self, book_id: int)-> bool:
@@ -392,14 +403,15 @@ class Database_Manager:
                 # Διαγραφή του βιβλίου από τον πίνακα BOOKS
                 cursor.execute("DELETE FROM BOOKS WHERE book_id = ?", (book_id,))
                 
-                return False
-                    
+                return True 
+                                
         except Exception as fail:
             print(f"ΣΦΑΛΜΑ ΚΑΤΑ ΤΗ ΔΙΑΓΡΑΦΗ: {fail}")
             return False
             
         finally:
-            connection.close()
+            if connection:
+                connection.close()
 
     def delete_user(self, user_id: int)-> bool:
         '''Διαγράφει τον χρήστη και όλες τις αξιολογήσεις του για να διατηρηθεί η ακεραιότητα των δεδομένων.'''
@@ -426,7 +438,8 @@ class Database_Manager:
             return False
             
         finally:
-            connection.close()
+            if connection:
+                connection.close()
 
     def delete_rating(self, user_id: int, book_id: int)-> bool:
         '''Διαγραφή μίας αξιολόγησης με βάση το user_id και book_id, 
@@ -454,5 +467,6 @@ class Database_Manager:
             return False
             
         finally:
-            connection.close()
+            if connection:
+                connection.close()
     
