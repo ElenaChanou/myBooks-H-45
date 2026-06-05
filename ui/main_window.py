@@ -1,7 +1,7 @@
 from tkinter import ttk
 import tkinter as tk
 from tkinter import messagebox
-from book_details_window import BookDetailsWindow
+from ui.book_details_window import BookDetailsWindow
 class MainWindow:
     def __init__(self, master):
         self.master = master
