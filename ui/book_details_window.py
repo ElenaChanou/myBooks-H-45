@@ -41,6 +41,9 @@ class BookDetailsWindow(ctk.CTkFrame):
         self.comments_frame.grid(row=4, column=0, sticky="nsew", pady=10, padx=10)
         self.comments_frame.grid_columnconfigure(0, weight=1)
 
+       
+        
+
         # Λίστα σχολίων Treeview
         self.tree_comments = ttk.Treeview(self.comments_frame, columns="comment", show="headings", height=5)
         self.tree_comments.heading("comment", text="Σχόλια Χρηστών")
@@ -68,9 +71,27 @@ class BookDetailsWindow(ctk.CTkFrame):
         self.save_button = ctk.CTkButton(self, text="Αποθήκευση", command=self.handle_save, fg_color="#4CAF50", hover_color="#45a049", text_color="white")
         self.save_button.grid(row=9, column=0, pady=15)
 
-        # Φόρτωση σχολίων
+      # Φόρτωση σχολίων με υποστήριξη για Dict (με/χωρίς s) και Tuple
+        print("--- DEBUG RATINGS DATA ---")
         for r in self.ratings:
-            display_text = f"⭐ {r.get('rating',0)}/5 - {r.get('username', 'Άγνωστος')}: {r.get('comment', '')}"
+            print("DATA TYPE CHECK:", type(r), "->", r)
+            
+            if isinstance(r, dict):
+                # Αν είναι λεξικό, ελέγχουμε και το 'comments' και το 'comment'
+                rating_val = r.get('rating', 0)
+                username = r.get('username', 'Άγνωστος')
+                comment_text = r.get('comments', r.get('comment', ''))
+            
+            elif isinstance(r, (list, tuple)):
+                # Αν είναι tuple/list (όπως στο προηγούμενο βιβλίο)
+                rating_val = r[2] if len(r) > 2 else 0
+                username = f"Χρήστης #{r[1]}" if len(r) > 1 else "Άγνωστος"
+                comment_text = r[3] if len(r) > 3 else ''
+            
+            else:
+                continue
+
+            display_text = f"⭐ {rating_val}/5 - {username}: {comment_text}"
             self.tree_comments.insert("", "end", values=(display_text,))
 
     def handle_save(self):
