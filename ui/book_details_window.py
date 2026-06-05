@@ -117,6 +117,18 @@ class BookDetailsWindow(ctk.CTkFrame):
         self.save_button=ctk.CTkButton(self, text="Αποθήκευση", command=self.handle_save, fg_color="#4CAF50", hover_color="#45a049", text_color="white")
         self.save_button.grid(row=9, column =0, pady=15)
 
+        tk.Label(self, text="Η αξιολόγησή σου:", font= ("arial", 12, "bold")).pack(pady=(20,5))
+
+        self.combo_rating=ttk.Combobox(self, values=[1, 2, 3, 4, 5], state="readonly")
+        self.combo_rating.pack(pady=5)
+
+        tk.Label(self, text="Σχόλιο:", font=("arial", 11)).pack(pady=(10,0))
+
+        self.text_comment = tk.Text(self, height=4, width=40)
+        self.text_comment.pack(pady=5, padx=10)
+
+        self.save_button=tk.Button(self, text="Αποθήκευση", command=self.handle_save, bg="#4CAF50", fg="white")
+        self.save_button.pack(pady=15)
         #Φόρτωση σχολίων από Demo Data
         for r in self.ratings:
             display_text = f"⭐ {r.get('rating',0)}/5 - {r.get('username', 'Άγνωστος')}: {r.get('comment', '')}"
@@ -170,18 +182,17 @@ class BookDetailsWindow(ctk.CTkFrame):
         self.master.show_main_screen()
 
 if __name__ == "__main__":
-    # Μικρό test για να βλέπεις αν τρέχει μόνο του ως Frame
-    root = ctk.CTk()
-    root.geometry("500x800")
+    root = tk.Tk()
+    root.withdraw()
     
     # 1. Φτιάχνουμε ένα ψεύτικο λεξικό για το τεστ
-    test_book = {"id": 1, "title": "Test Book", "author": "Test Author", "cover_url": ""}
+    test_book = {"id": 1, "title": "Test Book", "author": "Test Author"}
     
     # 2. Φτιάχνουμε μια ψεύτικη συνάρτηση για το on_save
     def test_refresh(): print("Refresh callback triggered!")
 
-    # 3. Φορτώνουμε το Frame και το κάνουμε pack στο root
+    # 3. Τα περνάμε στην κλήση
     app = BookDetailsWindow(root, book_data=test_book, on_save=test_refresh)
-    app.pack(fill="both", expand=True)
     
+    app.protocol("WM_DELETE_WINDOW", root.destroy)
     root.mainloop()

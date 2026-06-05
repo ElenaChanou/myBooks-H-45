@@ -5,10 +5,10 @@ import os
 # Βοηθάει την Python να βρει τον φάκελο db
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from db.db import Database_Manager
+
 
 # Δημιουργούμε ένα instance του Database_Manager για να μιλήσουμε στη βάση
-db = Database_Manager("myBooks")
+
 
 def hash_password(password: str) -> str:
     """
@@ -17,6 +17,9 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 def login(username: str, password: str) -> dict | None:
+    
+    from db.db import Database_Manager
+    db = Database_Manager("myBooks")
     """
     Ελέγχει credentials και επιστρέφει user dict ή None.
     """

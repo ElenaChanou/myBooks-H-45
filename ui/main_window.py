@@ -278,16 +278,22 @@ class MainFrame(ctk.CTkFrame):
 
 
 
+
 if __name__ == "__main__":
-    #ψεύτικος manager για να παρακάμπτει τη show_login_screen που βρίσκεται στον manager
-    class DummyController:
-        def show_login_screen(self):
-            print("To κουμπί αποσύνδεσης πατήθηκε!(Test mode)")
     root = tk.Tk()
-    dummy_manager = DummyController()
-    app = MainFrame(root, dummy_manager) #ο ψεύτικος controller στην θέση της παραμέτρου controller που περιμένει η MainFrame
-    app.pack(fill="both", expand=True)
-    root.mainloop()
+    root.withdraw()
+    
+    # 1. Φτιάχνουμε ένα ψεύτικο λεξικό για το τεστ
+    test_book = {"id": 1, "title": "Test Book", "author": "Test Author"}
+    
+    # 2. Φτιάχνουμε μια ψεύτικη συνάρτηση για το on_save
+    def test_refresh(): print("Refresh callback triggered!")
+
+    # 3. Τα περνάμε στην κλήση
+    app = BookDetailsWindow(root, book_data=test_book, on_save=test_refresh)
+    
+    app.protocol("WM_DELETE_WINDOW", root.destroy)
+    root.mainloop()  
 
 
 

@@ -1,5 +1,5 @@
 import sqlite3
-import hashlib
+from services.auth_service import hash_password
 
 
 class Database_Manager:
@@ -9,9 +9,12 @@ class Database_Manager:
         self.db_name = db_name
         self.execute_schema()
 
-    # Άνοιγμα σύνδεσης με τη βάση δεδομένων και ενεργοποίηση των foreign keys
+    
     def create_connection(self)-> sqlite3.Connection:
-
+        '''Ανοίγει και επιστρέφει μια νέα σύνδεση με τη βάση δεδομένων.
+           Ενεργοποιεί αυτόματα την υποστήριξη γιά Foreign Keys.
+        '''
+        
         connection = sqlite3.connect(f"{self.db_name}.db")
         connection.execute("PRAGMA foreign_keys = ON")
         return connection
@@ -68,11 +71,12 @@ class Database_Manager:
         '''Η συνάρτηση αυτή προσθέτει έναν νέο χρήστη στη βάση δεδομένων. 
         Επιστρέφει True αν η εγγραφή ήταν επιτυχής, διαφορετικά επιστρέφει False.'''
         connection = self.create_connection()
+        hashed_password = hash_password(password)
         try:
              with connection:
                 cursor = connection.cursor()
                 new_user_insert = "INSERT INTO USERS (username, password) VALUES (?, ?)"
-                cursor.execute(new_user_insert,(username, password))#, (username, hashed_password))
+                cursor.execute(new_user_insert,(username, hashed_password))
                 connection.commit()
                 return True
         except Exception as fail:
@@ -131,12 +135,13 @@ class Database_Manager:
     def find_user(self,username:str, password:str)-> int | None:
         '''Η συνάρτηση επιστρέφει το user_id αν βρεθεί χρήστης με τα συγκεκριμένα username και password, διαφορετικά επιστρέφει None.'''
         connection = self.create_connection()
+        hashed_password = hash_password(password)
         try:             
             with connection:
                 cursor = connection.cursor()
 
                 search_query = "SELECT user_id from USERS WHERE username = ? AND password = ?"
-                cursor.execute(search_query,(username, password))
+                cursor.execute(search_query,(username, hashed_password))
 
                 user = cursor.fetchone()
                 #ΕΠΙΣΤΡΕΦΕΙ ΤΟ user_id Ή None
@@ -278,7 +283,55 @@ class Database_Manager:
                     print(f"ΣΦΑΛΜΑ ΕΥΡΕΣΗΣ ΣΤΑΤΙΣΤΙΚΩΝ: {fail}")
                     return []
         finally:
-            connection.close()  
+            connection.close()
+
+    def get_read_books(self, user_id : int) -> list[dict]:
+        '''Η συνάρτηση επιστρέφει μία λίστα από λεξικά με τα βιβλία που έχει αξιολογήσει ένας χρήστης, 
+        διαφορετικά επιστρέφει μία κενή λίστα.'''
+
+        connection = self.create_connection()
+        try:
+            with connection:
+
+                connection.row_factory = sqlite3.Row
+                cursor = connection.cursor()
+
+                read_books_query = '''SELECT BOOKS.*,
+                                RATINGS.rating,
+                                RATINGS.comments
+                                FROM BOOKS
+                                JOIN RATINGS ON BOOKS.book_id = RATINGS.book_id
+                                WHERE RATINGS.user_id = ?'''
+
+                cursor.execute(read_books_query, (user_id,))
+                result = cursor.fetchall()
+                return [dict(r) for r in result]
+            
+        except Exception as fail:
+                print(f"Σφάλμα: {fail}")
+                return []
+        finally:
+                connection.close()
+    
+    def get_unread_books(self, user_id: int)-> list[dict]:
+        ''''Η συνάρτηση επιστρέφει μία λίστα από λεξικά με τα βιβλία που δεν έχει αξιολογήσει ένας χρήστης,'''
+        connection = self.create_connection()
+        try:
+            with connection:
+                connection.row_factory = sqlite3.Row
+                cursor = connection.cursor()
+
+                unread_books_query = '''SELECT * FROM BOOKS
+                WHERE book_id NOT IN
+                (SELECT book_id FROM RATINGS WHERE user_id = ?)'''
+                cursor.execute(unread_books_query, (user_id,))
+                result = cursor.fetchall()
+                return [dict(r) for r in result]
+        except Exception as fail:
+            print(f"ΣΦΑΛΜΑ: {fail}")
+            return []
+        finally:
+            connection.close()
     
     # UPDATE (Upsert):
     def upsert_rating(self, user_id: int, book_id: int, rating: int, comments: str)-> bool:
