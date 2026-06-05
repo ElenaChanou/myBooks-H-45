@@ -119,7 +119,7 @@ class BookDetailsWindow(ctk.CTkFrame):
 
         tk.Label(self, text="Η αξιολόγησή σου:", font= ("arial", 12, "bold")).pack(pady=(20,5))
 
-        self.combo_rating=ttk.Combobox(self, values=[1, 2, 3, 4, 5], state="readonly")
+        self.combo_rating=ttk.Combobox(self, values=["1", "2", "3", "4", "5"], state="readonly")
         self.combo_rating.pack(pady=5)
 
         tk.Label(self, text="Σχόλιο:", font=("arial", 11)).pack(pady=(10,0))
