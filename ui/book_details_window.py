@@ -127,7 +127,7 @@ class BookDetailsWindow(ctk.CTkFrame):
             else:
                 continue
 
-            display_text = f"⭐ {rating_val}/5 - {username}: {comment_text}"
+            display_text = f"👤 {username}   ⭐ {rating_val}/5:  {comment_text}"
             self.tree_comments.insert("", "end", values=(display_text,))
 
     def handle_save(self):

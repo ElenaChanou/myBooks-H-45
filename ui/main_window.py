@@ -5,7 +5,7 @@ from ui.book_details_window import BookDetailsWindow
 import customtkinter as ctk
 from ui.add_book_window import AddBookWindow
 from services.book_service import list_all_books, get_book_details
-from services.book_service import popular_books, unread_popular_books
+from services.book_service import popular_books, unread_popular_books, delete_book 
 
 
 class MainFrame(ctk.CTkFrame):
@@ -107,7 +107,7 @@ class MainFrame(ctk.CTkFrame):
         self.footer_frame.grid(row=2, column=0, pady=20, sticky="ew") 
         
         # Λέμε στις 4 στήλες των κουμπιών να μοιραστούν τον χώρο ίσα (weight=1)
-        self.footer_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
+        self.footer_frame.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
 
         
 
@@ -128,6 +128,9 @@ class MainFrame(ctk.CTkFrame):
         #καλεί τη μέθοδο open_details, η οποία θα παίρνει το ID και θα εμφανίζει τις λεπτομέρειες από τη βάση
         self.bookDetails_button=ctk.CTkButton(self.footer_frame, text ="Λεπτομέρειες", command=self.open_details, font = ("Arial" , 10, "italic"), fg_color = "#28a745", hover_color="#218838")
         self.bookDetails_button.grid(row=0,column=3,padx =10,pady=10)
+
+        self.deleteBook_button = ctk.CTkButton(self.footer_frame, text="Διαγραφή", command=self.handle_delete_book, font=("Arial", 10, "italic"), fg_color="#dc3545", hover_color="#c82333")
+        self.deleteBook_button.grid(row=0, column=4, padx=10, pady=10)
 
         self.logout_button = ctk.CTkButton(self.search_frame, text="Αποσύνδεση", command=self.controller.show_login_screen)
         self.logout_button.grid(row=0, column=5,padx=10, pady=10)
@@ -193,27 +196,30 @@ class MainFrame(ctk.CTkFrame):
             print(f"Επιλέχθηκε το βιβλίο με ID: {self.selected_book_id }")
 
     def handle_search(self, event=None):
-        #μετατρέπουμε το κείμενο από το entry σε μικρά με το lower()
         query = self.entry_search.get().lower()
         
+        # Καλούμε τη βάση για να πάρουμε τη λίστα με όλα τα πραγματικά βιβλία
+        all_books = list_all_books()
 
-        #προστασία αν πατηθείτο search χωρίς κείμενο
+        # Αν το πεδίο είναι άδειο, δείξε πάλι όλα τα βιβλία
         if not query:
-            self.update_table(self.books_data)
+            self.update_table(all_books)
             return
         
-    
         print(f"Αναζήτηση για: {query}")
     
-        #Προσωρινή λίστα για αποθήκευση όσων ταιριάζουν
         filtered_books = []
-        for book in self.books_data:
-             #Έλεγχος αν η λέξη της ααζήτησης υπάρχει σε τίτλο ή συγγραφέα
-            if query in book["title"].lower() or query in book["author"].lower():
-                filtered_books.append(book)#Λίστα αποτελεσμάτων αν ικανοποιείται το if
+        for book in all_books:
+            # Παίρνουμε τίτλο και συγγραφέα με ασφάλεια (χρησιμοποιούμε 'authors' για τη βάση)
+            title = book.get("title", "").lower()
+            author = book.get("authors", "").lower()
+            
+            # Έλεγχος αν η λέξη της αναζήτησης υπάρχει σε τίτλο ή συγγραφέα
+            if query in title or query in author:
+                filtered_books.append(book)
 
-        self.update_table(filtered_books)#κλήση της update_table με τα φιλτραρισμένα βιβλία
-   
+        # Ενημερώνουμε τον πίνακα με τα αποτελέσματα
+        self.update_table(filtered_books)
     def handle_popular(self):
         # Φέρνει τα 10 κορυφαία βιβλία. Παίρνουμε τα δεδομένα από το service
         books = popular_books(limit=10)
@@ -253,6 +259,40 @@ class MainFrame(ctk.CTkFrame):
             self.details_frame = BookDetailsWindow(master=self.controller, book_data=book_to_open, on_save=self.refresh_books_list)
             self.details_frame.pack(fill="both", expand=True) 
 
+    def handle_delete_book(self):
+        selected_item = self.tree.selection()
+
+        # Έλεγχος αν δεν έχει επιλεγεί κάτι
+        if not selected_item:
+            messagebox.showwarning("Προσοχή", "\nΕπίλεξε ένα βιβλίο για διαγραφή.")
+            return
+
+        # Παίρνουμε τα δεδομένα της επιλεγμένης γραμμής
+        item_data = self.tree.item(selected_item)['values']
+        book_id = item_data[0]
+        book_title = item_data[1]
+
+        # Πετάμε παράθυρο επιβεβαίωσης (Ask Yes/No)
+        confirm = messagebox.askyesno(
+            "Επιβεβαίωση Διαγραφής", 
+            f"Είσαι σίγουρος ότι θέλεις να διαγράψεις το βιβλίο:\n\n'{book_title}';\n\n(Θα διαγραφούν οριστικά και οι αξιολογήσεις του)"
+        )
+
+        # Αν ο χρήστης πατήσει "Ναι"
+        if confirm:
+            try:
+                # Καλούμε τη συνάρτηση της βάσης (αν η delete_book καλείται μέσα από κάποιο αντικείμενο βάσης πχ db.delete_book, άλλαξέ το εδώ)
+                success = delete_book(book_id)
+
+                if success:
+                    messagebox.showinfo("Επιτυχία", "Το βιβλίο διαγράφηκε επιτυχώς!")
+                    # Ανανεώνουμε τον πίνακα για να εξαφανιστεί το βιβλίο οπτικά
+                    self.refresh_books_list()
+                else:
+                    messagebox.showerror("Σφάλμα", "Το βιβλίο δεν μπόρεσε να διαγραφεί.")
+                    
+            except Exception as e:
+                messagebox.showerror("Σφάλμα", f"Προέκυψε πρόβλημα: {e}")
 
     def open_add_book(self):
         AddBookWindow(self, on_add_success=self.refresh_books_list)
