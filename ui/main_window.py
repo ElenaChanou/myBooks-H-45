@@ -7,7 +7,7 @@ from ui.add_book_window import AddBookWindow
 
 # Εισαγωγή όλων των απαραίτητων λειτουργιών (Services) που επικοινωνούν με τη Βάση Δεδομένων
 from services.book_service import list_all_books, get_book_details
-from services.book_service import popular_books, unread_popular_books
+from services.book_service import popular_books, unread_popular_books, delete_book 
 
 class MainFrame(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -112,13 +112,8 @@ class MainFrame(ctk.CTkFrame):
         self.footer_frame = ctk.CTkFrame(self, fg_color="transparent") 
         self.footer_frame.grid(row=2, column=0, pady=20, sticky="ew") 
         
-<<<<<<< Updated upstream
-        # Λέμε στις 4 στήλες των κουμπιών να μοιραστούν τον χώρο ίσα (weight=1)
-        self.footer_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
-=======
         # Λέμε στις 5 στήλες των κουμπιών να μοιραστούν τον χώρο ίσα (weight=1) για να απλωθούν όμορφα
         self.footer_frame.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
->>>>>>> Stashed changes
 
         self.addBook_button = ctk.CTkButton(self.footer_frame, text="Προσθήκη Βιβλίου", command=self.open_add_book, font=("Arial", 10, "italic"))
         self.addBook_button.grid(row=0, column=0, padx=10, pady=20)
@@ -133,28 +128,6 @@ class MainFrame(ctk.CTkFrame):
         self.bookDetails_button = ctk.CTkButton(self.footer_frame, text="Λεπτομέρειες", command=self.open_details, font=("Arial", 10, "italic"), fg_color="#28a745", hover_color="#218838")
         self.bookDetails_button.grid(row=0, column=3, padx=10, pady=10)
 
-<<<<<<< Updated upstream
-        self.logout_button = ctk.CTkButton(self.search_frame, text="Αποσύνδεση", command=self.controller.show_login_screen)
-        self.logout_button.grid(row=0, column=5,padx=10, pady=10)
-
-        self.welcome_label=ctk.CTkLabel(self.search_frame, text= "Καλώς ήρθες!", font=("Arial", 12), text_color="gray" )
-        self.welcome_label.grid(row=0, column=4, padx=10,pady=10)
-
-
-        #Δοκιμαστικά δεδομένα σε λεξικά μέσα σε λίστα. θα αντικατασταθούν με τα δεδομένα της βάσης
-        #self.books_data = [
-                          #{"id": 1, "title": "Όπλα, μικρόβια και ατσάλι", "author": "Jared Diamond", "year": "1997", "avg_rate": "4.6", "total_rates": "2000"},
-                          #{"id": 2, "title": "Big Bang", "author": "Simon Singh", "year": "2005", "avg_rate": "4.6", "total_rates": "1500"},
-                          #{"id": 3, "title": "Στα μυστικά του Βάλτου", "author": "Πηνελόπη Δέλτα", "year": "1937", "avg_rate": "4.8", "total_rates": "10000"},
-                          #{"id": 4, "title": "Ένα παιδί μετράει τ΄ άστρα", "author": "Μενέλαος Λουντέμης", "year": "1956", "avg_rate": "4.8", "total_rates": "7000", "cover_url": "https://covers.openlibrary.org/b/id/8225261-L.jpg"},
-                          #{"id": 5, "title": "Ο καπετάν Μιχάλης", "author": "Νίκος Καζαντζάκης", "year": "1953", "avg_rate": "4.9", "total_rates": "9200"},
-                          #{"id": 6, "title": "Η μεγάλη χίμαιρα", "author": "Μ.Καραγάτσης", "year": "1936", "avg_rate": "4.6", "total_rates": "6850"}
-                        #]
-
-        books_data=[]
-        # Καλούμε τη συνάρτηση για να γεμίσει ο πίνακας με το που ανοίγει η εφαρμογή
-        self.refresh_books_list()
-=======
         self.deleteBook_button = ctk.CTkButton(self.footer_frame, text="Διαγραφή", command=self.handle_delete_book, font=("Arial", 10, "italic"), fg_color="#dc3545", hover_color="#c82333")
         self.deleteBook_button.grid(row=0, column=4, padx=10, pady=10)
 
@@ -162,7 +135,6 @@ class MainFrame(ctk.CTkFrame):
         self.refresh_books_list() # Κατεβάζει τα βιβλία με το που ανοίγει η οθόνη
         
         # Συνδέουμε ένα "γεγονός" (Event): Όποτε ο χρήστης κάνει κλικ σε μια γραμμή, τρέχει η on_item_selected
->>>>>>> Stashed changes
         self.tree.bind("<<TreeviewSelect>>", self.on_item_selected)
         self.selected_book_id = None
     
@@ -193,34 +165,20 @@ class MainFrame(ctk.CTkFrame):
             print(f"Επιλέχθηκε το βιβλίο με ID: {self.selected_book_id}")
 
     def handle_search(self, event=None):
-<<<<<<< Updated upstream
-        #μετατρέπουμε το κείμενο από το entry σε μικρά με το lower()
-        query = self.entry_search.get().lower()
-=======
         """Φιλτράρει τα βιβλία ανάλογα με το τι έγραψε ο χρήστης"""
         query = self.entry_search.get().lower().strip()
->>>>>>> Stashed changes
         
+        # Καλούμε τη βάση για να πάρουμε τη λίστα με όλα τα πραγματικά βιβλία
+        all_books = list_all_books()
 
-        #προστασία αν πατηθείτο search χωρίς κείμενο
+        # Αν το πεδίο είναι άδειο, δείξε πάλι όλα τα βιβλία
         if not query:
-            self.update_table(self.books_data)
+            self.update_table(all_books)
             return
         
-    
         print(f"Αναζήτηση για: {query}")
     
-        #Προσωρινή λίστα για αποθήκευση όσων ταιριάζουν
         filtered_books = []
-<<<<<<< Updated upstream
-        for book in self.books_data:
-             #Έλεγχος αν η λέξη της ααζήτησης υπάρχει σε τίτλο ή συγγραφέα
-            if query in book["title"].lower() or query in book["author"].lower():
-                filtered_books.append(book)#Λίστα αποτελεσμάτων αν ικανοποιείται το if
-
-        self.update_table(filtered_books)#κλήση της update_table με τα φιλτραρισμένα βιβλία
-   
-=======
         for book in all_books:
             # Παίρνουμε τίτλο και συγγραφέα με ασφάλεια
             title = book.get("title", "").lower()
@@ -233,7 +191,6 @@ class MainFrame(ctk.CTkFrame):
         # Ενημερώνουμε τον πίνακα μόνο με τα αποτελέσματα που ταίριαξαν
         self.update_table(filtered_books)
 
->>>>>>> Stashed changes
     def handle_popular(self):
         """Φέρνει τα 10 κορυφαία βιβλία (Top 10) από το Service"""
         books = popular_books(limit=10)
@@ -272,8 +229,6 @@ class MainFrame(ctk.CTkFrame):
             self.details_frame = BookDetailsWindow(master=self.controller, book_data=book_to_open, on_save=self.refresh_books_list)
             self.details_frame.pack(fill="both", expand=True) 
 
-<<<<<<< Updated upstream
-=======
     def handle_delete_book(self):
         """Διαγράφει το επιλεγμένο βιβλίο και τις αξιολογήσεις του οριστικά"""
         selected_item = self.tree.selection()
@@ -309,7 +264,6 @@ class MainFrame(ctk.CTkFrame):
                     
             except Exception as e:
                 messagebox.showerror("Σφάλμα", f"Προέκυψε πρόβλημα: {e}")
->>>>>>> Stashed changes
 
     def open_add_book(self):
         """Ανοίγει το παράθυρο αναζήτησης και προσθήκης νέου βιβλίου (API)"""
