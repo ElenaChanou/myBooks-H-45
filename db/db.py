@@ -162,18 +162,18 @@ class Database_Manager:
             with connection:
                 connection.row_factory = sqlite3.Row #Με αυτό τον τρόπο μας επιστέφει τις εγγραφές σαν λεξικό και με τα πεδία τους αντι σε πλειάδες(γλυτώνουμε το index).
                 cursor = connection.cursor()
-                try:
-                    cursor.execute("SELECT * FROM BOOKS WHERE book_id = ?", (book_id,))
-                    row = cursor.fetchone()
+                
+                cursor.execute("SELECT * FROM BOOKS WHERE book_id = ?", (book_id,))
+                row = cursor.fetchone()
 
-                    if row:
-                        return dict(row)
-                    else:
-                        return None
-                    
-                except Exception as fail:
-                    print(f"ΣΦΑΛΜΑ ΚΑΤΑ ΤΗΝ ΑΝΑΚΤΗΣΗ: {fail}")
+                if row:
+                    return dict(row)
+                else:
                     return None
+                    
+        except Exception as fail:
+            print(f"ΣΦΑΛΜΑ ΚΑΤΑ ΤΗΝ ΑΝΑΚΤΗΣΗ: {fail}")
+            return None
         finally:
             if connection:
                 connection.close()
@@ -186,20 +186,20 @@ class Database_Manager:
                 # Μετατρέπει σε λεξικό τις εγγραφές
                 connection.row_factory = sqlite3.Row
                 cursor = connection.cursor()
-                try:
-                    query = '''
-                            SELECT USERS.username, RATINGS.rating, RATINGS.comments
-                            FROM RATINGS
-                            JOIN USERS ON RATINGS.user_id = USERS.user_id 
-                            WHERE RATINGS.book_id = ?
-                            '''
-                    cursor.execute(query, (book_id,))
-                    rows = cursor.fetchall()
+                
+                query = '''
+                    SELECT USERS.username, RATINGS.rating, RATINGS.comments
+                    FROM RATINGS
+                    JOIN USERS ON RATINGS.user_id = USERS.user_id 
+                    WHERE RATINGS.book_id = ?
+                    '''
+                cursor.execute(query, (book_id,))
+                rows = cursor.fetchall()
 
-                    return[dict(row) for row in rows]
-                except Exception as fail:
-                    print(f"ΑΠΟΤΥΧΙΑ ΑΝΑΚΤΗΣΗΣ : {fail}")
-                    return []
+                return[dict(row) for row in rows]
+        except Exception as fail:
+            print(f"ΑΠΟΤΥΧΙΑ ΑΝΑΚΤΗΣΗΣ : {fail}")
+            return []
         finally:
             if connection:
                 connection.close()
@@ -212,13 +212,13 @@ class Database_Manager:
             with connection:
                 connection.row_factory = sqlite3.Row
                 cursor = connection.cursor()
-                try:
-                    cursor.execute("SELECT book_id FROM RATINGS WHERE user_id = ?", (user_id,))
-                    rows = cursor.fetchall()
-                    return [dict(row) for row in rows]
-                except Exception as fail:
-                    print(f"ΑΠΟΤΥΧΙΑ ΑΝΑΚΤΗΣΗΣ ΑΞΙΟΛΟΓΗΣΕΩΝ ΧΡΗΣΤΗ: {fail}")
-                    return []
+                
+                cursor.execute("SELECT book_id FROM RATINGS WHERE user_id = ?", (user_id,))
+                rows = cursor.fetchall()
+                return [dict(row) for row in rows]
+        except Exception as fail:
+            print(f"ΑΠΟΤΥΧΙΑ ΑΝΑΚΤΗΣΗΣ ΑΞΙΟΛΟΓΗΣΕΩΝ ΧΡΗΣΤΗ: {fail}")
+            return []
         finally:
             if connection:
                 connection.close()
@@ -235,27 +235,27 @@ class Database_Manager:
                 # Ρυθμίζουμε το row_factory για να πάρουμε τα αποτελέσματα σε λεξικό.
                 connection.row_factory = sqlite3.Row
                 cursor = connection.cursor()
-                try:
-                    # Αν ο χρήστης δεν πληκτρολογήσει τίποτα επιστρέφει όλες τις εγγραφές
-                    if not query or query.strip() == "":
-                        cursor.execute("SELECT * FROM BOOKS")
-                    else:
-                        # Αναζήτησ με %{}% LIKE
-                        search_term = f"%{query}%"
-                        search_sql = """
-                            SELECT * FROM BOOKS 
-                            WHERE title LIKE ? OR authors LIKE ? OR isbn LIKE ?
-                        """
-                        # Περνάμε το search_term σε κάθε πεδίο
-                        cursor.execute(search_sql, (search_term, search_term, search_term))
+                
+                # Αν ο χρήστης δεν πληκτρολογήσει τίποτα επιστρέφει όλες τις εγγραφές
+                if not query or query.strip() == "":
+                    cursor.execute("SELECT * FROM BOOKS")
+                else:
+                    # Αναζήτησ με %{}% LIKE
+                    search_term = f"%{query}%"
+                    search_sql = """
+                        SELECT * FROM BOOKS 
+                        WHERE title LIKE ? OR authors LIKE ? OR isbn LIKE ?
+                    """
+                    # Περνάμε το search_term σε κάθε πεδίο
+                    cursor.execute(search_sql, (search_term, search_term, search_term))
 
                     rows = cursor.fetchall()
                     #Επιστρέφουμε το αποτέλεσμα σε κανονικό λεξικό της Python
                     return [dict(row) for row in rows]
             
-                except Exception as fail:
-                    print(f"Σφάλμα κατά την αναζήτηση: {fail}")
-                return []
+        except Exception as fail:
+            print(f"Σφάλμα κατά την αναζήτηση: {fail}")
+            return []
         finally:
             if connection:
                 connection.close()
@@ -269,23 +269,23 @@ class Database_Manager:
             with connection:
                 connection.row_factory = sqlite3.Row
                 cursor = connection.cursor()
-                try:
-                # Χρησιμοποιούμε LEFT JOIN για να συμπεριλάβουμε και τα βιβλία που δεν έχουν αξιολογήσεις.
-                    books_stats_query = '''
-                    SELECT BOOKS.*, 
-                    ROUND(AVG(RATINGS.rating), 2) AS avg_rate,
-                    COUNT(RATINGS.rating) AS total_rates
-                    FROM BOOKS
-                    LEFT JOIN RATINGS ON BOOKS.book_id = RATINGS.book_id
-                    GROUP BY BOOKS.book_id'''
+            
+            # Χρησιμοποιούμε LEFT JOIN για να συμπεριλάβουμε και τα βιβλία που δεν έχουν αξιολογήσεις.
+                books_stats_query = '''
+                SELECT BOOKS.*, 
+                ROUND(AVG(RATINGS.rating), 2) AS avg_rate,
+                COUNT(RATINGS.rating) AS total_rates
+                FROM BOOKS
+                LEFT JOIN RATINGS ON BOOKS.book_id = RATINGS.book_id
+                GROUP BY BOOKS.book_id'''
                 
-                    cursor.execute(books_stats_query)
-                    rows = cursor.fetchall()
+                cursor.execute(books_stats_query)
+                rows = cursor.fetchall()
 
-                    return [dict(row) for row in rows]
-                except Exception as fail:
-                    print(f"ΣΦΑΛΜΑ ΕΥΡΕΣΗΣ ΣΤΑΤΙΣΤΙΚΩΝ: {fail}")
-                    return []
+                return [dict(row) for row in rows]
+        except Exception as fail:
+            print(f"ΣΦΑΛΜΑ ΕΥΡΕΣΗΣ ΣΤΑΤΙΣΤΙΚΩΝ: {fail}")
+            return []
         finally:
             if connection:
                 connection.close()
