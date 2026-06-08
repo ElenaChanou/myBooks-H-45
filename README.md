@@ -1,2 +1,172 @@
-# myBooks-H-45
-Hellenic Open University (HOU) - Academic Team Project A Python-based application designed to organize and classify digital eBook collections. This project was developed as part of our studies at the Hellenic Open University, focusing on software engineering principles and collaborative development.
+# myBooks - Desktop Εφαρμογή Διαχείρισης Βιβλιοθήκης
+
+Το **myBooks** είναι μια desktop εφαρμογή διαχείρισης ψηφιακής βιβλιοθήκης και κοινωνικής δικτύωσης, σχεδιασμένη ειδικά για τις ανάγκες μιας κλειστής ομάδας βιβλιόφιλων. Η εφαρμογή επιτρέπει στα μέλη να οργανώνουν την κοινή τους συλλογή, να αναζητούν τίτλους σε πραγματικό χρόνο μέσω του Google Books API, να εισάγουν βιβλία χειροκίνητα, καθώς και να αλληλεπιδρούν βαθμολογώντας και σχολιάζοντας τα αγαπημένα τους έργα μέσα από ένα σύγχρονο γραφικό περιβάλλον εργασίας.
+
+---
+
+## 1. Κύρια Χαρακτηριστικά
+
+- **Σύνδεση & Εγγραφή Χρηστών (Authentication):** Ασφαλές σύστημα εγγραφής και ταυτοποίησης χρηστών με κρυπτογράφηση κωδικών πρόσβασης (SHA-256).
+- **Αναζήτηση & Εισαγωγή Βιβλίων μέσω Google Books API:** Αναζήτηση βιβλίων σε πραγματικό χρόνο με αυτόματη ανάκτηση στοιχείων (Τίτλος, Συγγραφέας, Έτος, ISBN, Περιγραφή, Volume ID) και λήψη εξωφύλλου.
+- **Χειροκίνητη Καταχώρηση Βιβλίων:** Δυνατότητα προσθήκης βιβλίων με χειροκίνητη συμπλήρωση φορμών για βιβλία που δεν υπάρχουν online.
+- **Κοινωνική Αλληλεπίδραση (Αξιολογήσεις & Σχόλια):** Σύστημα βαθμολόγησης (1-5 αστέρια) και σχολιασμού βιβλίων από τους χρήστες.
+- **Στατιστικά Βιβλίων:** Εμφάνιση του μέσου όρου βαθμολογίας και του συνολικού αριθμού αξιολογήσεων για κάθε βιβλίο.
+- **Σύγχρονο GUI:** Υλοποιημένο με `customtkinter` για ένα μοντέρνο dark-themed περιβάλλον εργασίας.
+- **Τοπική Βάση Δεδομένων:** Χρήση SQLite (`myBooks.db`) για αποθήκευση όλων των δεδομένων.
+
+---
+
+## 2. Αρχιτεκτονική Εφαρμογής
+
+Η εφαρμογή ακολουθεί μια **Modular/Layered** αρχιτεκτονική, χωρισμένη σε 4 βασικά επίπεδα:
+1. **Διεπαφή Χρήστη (UI):** Κατασκευασμένη με `customtkinter`. Διαχειρίζεται τα παράθυρα (Login, Main, Add Book, Manual Entry, Details).
+2. **Υπηρεσίες (Services):** Περιέχουν την επιχειρηματική λογική της εφαρμογής (login, book details, import/search, rating validation).
+3. **Εξωτερικά APIs (API Integration):** Διασύνδεση με το Google Books API για αναζήτηση και λήψη εξωφύλλων.
+4. **Επίπεδο Δεδομένων (Database):** Διαχείριση των CRUD λειτουργιών στη βάση δεδομένων SQLite.
+
+---
+
+## 3. Απαιτήσεις Συστήματος
+
+Για τη σωστή εκτέλεση της εφαρμογής, βεβαιωθείτε ότι το σύστημά σας πληροί τις ακόλουθες προϋποθέσεις:
+- **Python:** Έκδοση 3.10 ή νεότερη.
+- **Λειτουργικό Σύστημα:** Windows, macOS (συμπεριλαμβανομένων Apple Silicon M1/M2) ή Linux.
+- **Σύνδεση στο Διαδίκτυο:** Απαραίτητη για την online αναζήτηση και αυτόματη ανάκτηση στοιχείων από το Google Books API.
+
+---
+
+## 4. Εγκατάσταση & Ρύθμιση
+
+### 1. Κλωνοποίηση του Repository
+```bash
+git clone https://github.com/YOUR_REPO/myBooks.git
+cd myBooks
+```
+
+### 2. Δημιουργία Εικονικού Περιβάλλοντος (Virtual Environment)
+Προαιρετικό αλλά συνιστάται για την αποφυγή διενέξεων με άλλες βιβλιοθήκες του συστήματος.
+```bash
+# Δημιουργία του venv
+python -m venv venv
+
+# Ενεργοποίηση (macOS / Linux)
+source venv/bin/activate
+
+# Ενεργοποίηση (Windows)
+venv\Scripts\activate
+```
+
+### 3. Εγκατάσταση Εξαρτήσεων
+Εγκαταστήστε τις απαιτούμενες βιβλιοθήκες μέσω του `requirements.txt`:
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Ρύθμιση του API Key (.env)
+Η εφαρμογή απαιτεί ένα Google Books API Key για την αναζήτηση βιβλίων.
+1. Δημιουργήστε ένα αρχείο με όνομα `.env` στον αρχικό φάκελο (root directory) του project.
+2. Προσθέστε το κλειδί σας με την ακόλουθη μορφή:
+   ```env
+   GOOGLE_BOOKS_API_KEY = "ΤΟ_API_KEY_ΣΑΣ"
+   ```
+
+---
+
+## 5. Εκτέλεση της Εφαρμογής
+
+### Κύρια Εφαρμογή
+Εκτελέστε το κεντρικό αρχείο για να ανοίξει το γραφικό περιβάλλον (GUI):
+```bash
+python myBooks.py
+```
+
+### Δοκιμαστικό Script Εισαγωγής (Verify Import)
+Μπορείτε να ελέγξετε αν η σύνδεση με το Google Books API και η βάση δεδομένων λειτουργούν σωστά εκτελώντας:
+```bash
+python verify_import.py
+```
+
+---
+
+## 6. Δομή Αρχείων
+
+Το project έχει την ακόλουθη δομή:
+```text
+myBooks/
+├── LICENSE
+├── README.md
+├── requirements.txt          # Απαιτούμενες βιβλιοθήκες Python
+├── .env                      # Ρυθμίσεις περιβάλλοντος (API Key)
+├── myBooks.py                # Κεντρικό σημείο εισόδου της εφαρμογής (Main entry point)
+├── myBooks.db                # SQLite βάση δεδομένων
+├── verify_import.py          # Script επαλήθευσης Google Books API & DB
+├── test_api.py               # Unit tests για το API & λήψη εξωφύλλων
+│
+├── api/
+│   ├── google_books.py       # Σύνδεση & αναζήτηση στο Google Books API
+│   └── covers.py             # Λήψη & μορφοποίηση (resize) εξωφύλλων βιβλίων
+│
+├── assets/
+│   └── covers/               # Τοπική αποθήκευση των ληφθέντων εξωφύλλων (.jpg)
+│
+├── db/
+│   └── db.py                 # Σχεδιασμός Schema & CRUD λειτουργίες SQLite
+│
+├── services/
+│   ├── auth_service.py       # Ταυτοποίηση χρηστών & hashing κωδικών (SHA-256)
+│   ├── book_service.py       # Διαχείριση βιβλίων & στατιστικά δημοφιλίας
+│   ├── import_service.py     # Εισαγωγή βιβλίων από το API & τοπική αποθήκευση
+│   └── rating_service.py     # Αποθήκευση & έλεγχος αξιολογήσεων/σχολίων
+│
+└── ui/
+    ├── appUI.py              # Κεντρικός ελεγκτής UI (AppController)
+    ├── Manager.py            # Window Manager / Controller για πλοήγηση
+    ├── login_window.py       # Οθόνη σύνδεσης & εγγραφής χρηστών
+    ├── main_window.py        # Κεντρικό παράθυρο (Λίστα βιβλίων, φίλτρα, προτάσεις)
+    ├── add_book_window.py    # Παράθυρο αναζήτησης/εισαγωγής από Google Books API
+    ├── manual_book_window.py # Παράθυρο χειροκίνητης καταχώρησης βιβλίου
+    ├── book_details_window.py# Παράθυρο λεπτομερειών βιβλίου & υποβολής σχολίων
+    └── test_ui.py            # Dummy Controller για απομονωμένο UI testing
+```
+
+---
+
+## 7. Δομή Βάσης Δεδομένων (Database Schema)
+
+Η SQLite βάση (`myBooks.db`) αποτελείται από 3 συνδεδεμένους πίνακες:
+
+1. **USERS (Χρήστες):**
+   - `user_id` (INTEGER, PRIMARY KEY): Μοναδικό ID χρήστη.
+   - `username` (TEXT, UNIQUE): Όνομα χρήστη.
+   - `password` (TEXT): SHA-256 κρυπτογραφημένος κωδικός πρόσβασης.
+
+2. **BOOKS (Βιβλία):**
+   - `book_id` (INTEGER, PRIMARY KEY): Μοναδικό ID βιβλίου.
+   - `title` (TEXT): Τίτλος βιβλίου.
+   - `authors` (TEXT): Συγγραφέας/είς.
+   - `year` (TEXT): Έτος έκδοσης.
+   - `isbn` (TEXT): ISBN-13 αναγνωριστικό.
+   - `description` (TEXT): Περιγραφή/Περίληψη.
+   - `cover_img` (TEXT): Τοπικό path της εικόνας εξωφύλλου.
+   - `volume_id` (TEXT, UNIQUE): Το μοναδικό Volume ID από το Google Books API.
+
+3. **RATINGS (Αξιολογήσεις):**
+   - `rate_id` (INTEGER, PRIMARY KEY): Μοναδικό ID αξιολόγησης.
+   - `user_id` (INTEGER, FOREIGN KEY): Σύνδεση με τον χρήστη.
+   - `book_id` (INTEGER, FOREIGN KEY): Σύνδεση με το βιβλίο.
+   - `comments` (TEXT): Σχόλιο/Κριτική του χρήστη.
+   - `rating` (INTEGER): Βαθμολογία (1 έως 5).
+
+---
+
+## 8. Εκτέλεση Unit Tests
+
+Μπορείτε να εκτελέσετε τα unit tests για την επιβεβαίωση της σωστής λειτουργίας του Google Books API και των covers:
+```bash
+python test_api.py
+```
+
+Για να τρέξετε το UI testing περιβάλλον (DummyController) απομονωμένα:
+```bash
+python ui/test_ui.py
+```
