@@ -92,7 +92,7 @@ python verify_import.py
 
 Το project έχει την ακόλουθη δομή:
 ```text
-myBooks/
+myBooks-H-45/
 ├── LICENSE
 ├── README.md
 ├── requirements.txt          # Απαιτούμενες βιβλιοθήκες Python
