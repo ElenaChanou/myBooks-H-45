@@ -83,3 +83,10 @@ def unread_popular_books(user_id, limit=10):
     unread = [book for book in popular if book['book_id'] not in rated_ids]
 
     return unread[:limit]
+
+    #Γέφυρα για να μιλήσει με τη βάση
+def delete_book(book_id: int) -> bool:
+        """Επικοινωνεί με τη βάση για τη διαγραφή του βιβλίου."""
+        return db.delete_book(book_id)
+
+    

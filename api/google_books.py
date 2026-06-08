@@ -1,5 +1,6 @@
 import urllib.request
 import urllib.parse
+import urllib.error
 import json
 import os
 from dotenv import load_dotenv
@@ -12,11 +13,15 @@ API_KEY = os.getenv("GOOGLE_BOOKS_API_KEY")
 
 
 def search_google_books(query):
+
     base_url = "https://www.googleapis.com/books/v1/volumes"
+
+    search_query = f"intitle:{query}" #Αναζήτηση ακριβώς με τίτλο στα μέταδεδομένα(καλύτερα αποτελέσματα-μικρότερο εύρος αναζήτησης)
     params = {
-        'q': query,
+        'q': search_query,
         'maxResults': 10,
         'printType': 'books',
+        'orderBy': 'relevance',
         'projection': 'full',
         'key': API_KEY
     }
@@ -25,9 +30,6 @@ def search_google_books(query):
 
     try:
         with urllib.request.urlopen(url) as response:
-            if response.status != 200:
-                print(f"API error: {response.status}")
-                return []
 
             data = json.loads(response.read().decode('utf-8'))
 
@@ -38,7 +40,7 @@ def search_google_books(query):
             for item in data['items']:
                 volume_info = item.get('volumeInfo', {})
 
-                # authors is a list, join into a single string
+                # Οι συγγραφείς μπορεί να είναι μια λίστα, οπότε την μετατρέπουμε σε string
                 authors_list = volume_info.get('authors', None)
                 authors = ", ".join(authors_list) if authors_list else 'Unknown'
 
@@ -46,7 +48,7 @@ def search_google_books(query):
                 published_date = volume_info.get('publishedDate', None)
                 year = published_date[:4] if published_date else None
 
-                # industryIdentifiers is a list of dicts, find the ISBN_13 entry
+                # industryIdentifiers Eίναι μια λίστα από λεξικά, θα αναζητήσουμε το ISBN_13
                 identifiers = volume_info.get('industryIdentifiers', [])
                 isbn = None
                 for identifier in identifiers:
@@ -65,7 +67,9 @@ def search_google_books(query):
                 })
 
             return books_found
-
-    except Exception as e:
-        print(f"Error communicating with API: {e}")
+    except urllib.error.HTTPError as error:
+        print(f"HTTP Σφάλμα: {error.code} - {error.reason}")
+        return []
+    except Exception as error:
+        print(f"Σφάλμα κατά την επικοινωνία με την API: {error}")
         return []
