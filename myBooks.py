@@ -17,7 +17,7 @@ class MyBooksApp(ctk.CTk):
         super().__init__()
         
         self.title("myBooks - Κεντρικό Σύστημα")
-        self.geometry("1200x800")
+        self.geometry("1400x1000")
         
         # 1. Αρχικοποίηση της Βάσης Δεδομένων
         # Η κλάση Database_Manager τρέχει αυτόματα την execute_schema() κατά το __init__
