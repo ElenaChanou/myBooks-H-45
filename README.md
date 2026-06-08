@@ -39,8 +39,8 @@
 
 ### 1. Κλωνοποίηση του Repository
 ```bash
-git clone https://github.com/YOUR_REPO/myBooks.git
-cd myBooks
+git clone https://github.com/ElenaChanou/myBooks-H-45.git
+cd myBooks-H-45
 ```
 
 ### 2. Δημιουργία Εικονικού Περιβάλλοντος (Virtual Environment)
