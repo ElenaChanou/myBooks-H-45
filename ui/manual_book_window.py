@@ -141,12 +141,13 @@ class ManualBookWindow(ctk.CTkToplevel):
         # 3. Δημιουργούμε το λεξικό με τα δεδομένα του βιβλίου, όπως ακριβώς τα περιμένει η βάση
         book_data = {
             "title": title,
-            "author": author,
+            "authors": author,      
             "year": year,
-            "isbn": isbn if isbn else None, # Αν είναι κενό, βάζει None (NULL στη βάση)
+            "isbn": isbn if isbn else None,
             "description": desc,
-            "cover_url": self.cover_path if self.cover_path else None
+            "cover_img": self.cover_path if self.cover_path else None  
         }
+        
 
         # 4. Προσπάθεια αποθήκευσης στη βάση
         try:
