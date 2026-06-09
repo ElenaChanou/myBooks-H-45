@@ -80,11 +80,6 @@ pip install -r requirements.txt
 python myBooks.py
 ```
 
-### Δοκιμαστικό Script Εισαγωγής (Verify Import)
-Μπορείτε να ελέγξετε αν η σύνδεση με το Google Books API και η βάση δεδομένων λειτουργούν σωστά εκτελώντας:
-```bash
-python verify_import.py
-```
 
 ---
 
@@ -131,42 +126,5 @@ myBooks-H-45/
 
 ---
 
-## 7. Δομή Βάσης Δεδομένων (Database Schema)
 
-Η SQLite βάση (`myBooks.db`) αποτελείται από 3 συνδεδεμένους πίνακες:
 
-1. **USERS (Χρήστες):**
-   - `user_id` (INTEGER, PRIMARY KEY): Μοναδικό ID χρήστη.
-   - `username` (TEXT, UNIQUE): Όνομα χρήστη.
-   - `password` (TEXT): SHA-256 κρυπτογραφημένος κωδικός πρόσβασης.
-
-2. **BOOKS (Βιβλία):**
-   - `book_id` (INTEGER, PRIMARY KEY): Μοναδικό ID βιβλίου.
-   - `title` (TEXT): Τίτλος βιβλίου.
-   - `authors` (TEXT): Συγγραφέας/είς.
-   - `year` (TEXT): Έτος έκδοσης.
-   - `isbn` (TEXT): ISBN-13 αναγνωριστικό.
-   - `description` (TEXT): Περιγραφή/Περίληψη.
-   - `cover_img` (TEXT): Τοπικό path της εικόνας εξωφύλλου.
-   - `volume_id` (TEXT, UNIQUE): Το μοναδικό Volume ID από το Google Books API.
-
-3. **RATINGS (Αξιολογήσεις):**
-   - `rate_id` (INTEGER, PRIMARY KEY): Μοναδικό ID αξιολόγησης.
-   - `user_id` (INTEGER, FOREIGN KEY): Σύνδεση με τον χρήστη.
-   - `book_id` (INTEGER, FOREIGN KEY): Σύνδεση με το βιβλίο.
-   - `comments` (TEXT): Σχόλιο/Κριτική του χρήστη.
-   - `rating` (INTEGER): Βαθμολογία (1 έως 5).
-
----
-
-## 8. Εκτέλεση Unit Tests
-
-Μπορείτε να εκτελέσετε τα unit tests για την επιβεβαίωση της σωστής λειτουργίας του Google Books API και των covers:
-```bash
-python test_api.py
-```
-
-Για να τρέξετε το UI testing περιβάλλον (DummyController) απομονωμένα:
-```bash
-python ui/test_ui.py
-```

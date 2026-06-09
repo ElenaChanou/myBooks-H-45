@@ -6,7 +6,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from db.db import Database_Manager
 
-# Δημιουργούμε ένα instance της βάσης
+# Αρχικοποίηση του manager για τις κλήσεις στη βάση
 db = Database_Manager("myBooks")
 
 
@@ -32,7 +32,7 @@ def get_book_details(book_id: int) -> dict | None:
     if book is None:
         return None
     
-    # Στη βάση σου η μέθοδος λέγεται get_ratings
+ # Τραβάμε τα ratings από τη βάση χρησιμοποιώντας τη μέθοδο get_ratings
     ratings = db.get_ratings(book_id)
 
     return {
@@ -45,7 +45,7 @@ def popular_books(limit=10):
     """Επιστρέφει τα πιο δημοφιλή βιβλία βάσει avg_rate."""
     all_books = db.get_all_books_with_stats()
 
-    # Ταξινόμηση με βάση το 'avg_rate' (έτσι λέγεται το πεδίο στο db.py)
+        # Ταξινόμηση: βάζουμε πρώτα όσα έχουν score, αποφεύγοντας τα None για να μην κρασάρει
     sorted_books = sorted(
         all_books,
         key=lambda x: (x.get('avg_rate') is not None, x.get('avg_rate') or 0),
@@ -59,15 +59,11 @@ def unread_popular_books(user_id, limit=10):
     """Επιστρέφει δημοφιλή βιβλία που ο χρήστης δεν έχει αξιολογήσει ακόμα."""
     popular = popular_books(limit=100)
     
-    # Παίρνουμε τα IDs των βιβλίων που έχει ήδη αξιολογήσει ο χρήστης
-    # Support databases that may or may not implement get_ratings_by_user.
-    # Use getattr to avoid static attribute access errors and provide a
-    # safe fallback that returns an empty list.
-    #Αλλαγή για να συμφωνεί με τηυ βάση user_ratings = getattr(db, "get_ratings_by_user", lambda uid: [])(user_id)
+     # Χρήση getattr για ασφάλεια σε περίπτωση που αλλάξει το όνομα της μεθόδου στη βάση
     user_ratings = getattr(db, "get_user_ratings", lambda uid: [])(user_id)
 
    
-    # Normalize rating entries to extract book ids robustly.
+# Καθαρίζουμε τα δεδομένα για να απομονώσουμε τα book IDs που έχουν ήδη βαθμολογηθεί
     rated_ids = set()
     for r in user_ratings:
         if not isinstance(r, dict):
@@ -79,12 +75,12 @@ def unread_popular_books(user_id, limit=10):
         elif 'book' in r and isinstance(r['book'], int):
             rated_ids.add(r['book'])
 
-    # Φιλτράρισμα (το πεδίο λέγεται 'book_id' στη βάση)
+ # Κρατάμε μόνο τα βιβλία που το 'book_id' τους ΔΕΝ είναι στα rated_ids
     unread = [book for book in popular if book['book_id'] not in rated_ids]
 
     return unread[:limit]
 
-    #Γέφυρα για να μιλήσει με τη βάση
+
 def delete_book(book_id: int) -> bool:
         """Επικοινωνεί με τη βάση για τη διαγραφή του βιβλίου."""
         return db.delete_book(book_id)

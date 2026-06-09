@@ -23,11 +23,11 @@ def login(username: str, password: str) -> dict | None:
     """
     Ελέγχει credentials και επιστρέφει user dict ή None.
     """
-    # Χρησιμοποιούμε τη δική σου μέθοδο find_user από το db.py
+
     user_id = db.find_user(username, password)
     
     if user_id is not None:
-        # Αν το login είναι επιτυχές, επιστρέφουμε το dictionary 
+    # Το login πέτυχε! Φτιάχνουμε το session dict για το main app   
         return {"id": user_id, "username": username}
     
     return None

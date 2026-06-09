@@ -88,7 +88,8 @@ class ManualBookWindow(ctk.CTkToplevel):
         filename = filedialog.askopenfilename(
             title="Επιλογή Εξωφύλλου",
             # Φίλτρο: Λέμε στον υπολογιστή να δείχνει ΜΟΝΟ αρχεία εικόνας
-            filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")]
+            # Χρήση tuple για τις επεκτάσεις ώστε να μην κρασάρει στο macOS
+            filetypes=[("Image Files", ("*.png", "*.jpg", "*.jpeg"))]
         )
 
         # 2. Αν ο χρήστης επέλεξε πράγματι ένα αρχείο (δεν πάτησε "Ακύρωση")

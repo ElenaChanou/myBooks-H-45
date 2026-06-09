@@ -2,25 +2,25 @@ import sys
 import os
 import customtkinter as ctk
 
-
+# Προσθήκη του τρέχοντος φακέλου στο path για να μην έχουμε θέματα με τα imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from db.db import Database_Manager
 from ui.login_window import LoginFrame
 from ui.main_window import MainFrame
 from services import auth_service
-# Μπορείς να κάνεις import και τα υπόλοιπα services όταν χρειαστεί
-# from services import book_service, import_service, rating_service
+
 
 class MyBooksApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         
+        # Βασικές ρυθμίσεις του παραθύρου
         self.title("myBooks - Κεντρικό Σύστημα")
         self.geometry("1400x1000")
         
         # 1. Αρχικοποίηση της Βάσης Δεδομένων
-        # Η κλάση Database_Manager τρέχει αυτόματα την execute_schema() κατά το __init__
+        # Σύνδεση με τη βάση (ο Database_Manager φτιάχνει τα tables αυτόματα στο init)
         self.db = Database_Manager("myBooks")
         
         # Μεταβλητή για το session του χρήστη (αποθηκεύει id και username)
@@ -43,9 +43,9 @@ class MyBooksApp(ctk.CTk):
         user_session = auth_service.login(username, password)
         
         if user_session:
-            self.current_user = user_session  # Αποθήκευση του dict {id, username}
-            self.show_main_screen()
-            return True
+            self.current_user = user_session  # Κράτα τα στοιχεία του χρήστη στη μνήμη
+            self.show_main_screen()             # Προχωράμε στην αρχική οθόνη
+            return True                        
         else:
             return False
 
@@ -57,18 +57,16 @@ class MyBooksApp(ctk.CTk):
         self.current_frame = MainFrame(self, controller=self)
         self.current_frame.pack(fill="both", expand=True)
         
-        # Ενημέρωση του UI με τα πραγματικά δεδομένα του χρήστη
+        # Αν έχουμε ενεργό χρήστη, άλλαξε το welcome label με το όνομά του
         if self.current_user:
             self.current_frame.welcome_label.configure(
                 text=f"Καλώς ήρθες, {self.current_user['username']}!"
             )
             
-        # ΕΔΩ: Μελλοντικά θα φορτώνεις τα δεδομένα από το book_service αντί για τη hardcoded λίστα
-        # books_data = book_service.list_all_books()
-        # self.current_frame.update_table(books_data)
+        
 
 if __name__ == "__main__":
-    # Ρύθμιση εμφάνισης (προαιρετικά)
+    # Ρύθμιση εμφάνισης 
     ctk.set_appearance_mode("Dark")
     ctk.set_default_color_theme("blue")
     
